@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261004-4">
+  <link rel="stylesheet" href="styles.css?v=20261004-5">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -40,7 +40,9 @@
         <button data-view="orders" class="active">Pedidos</button>
         <button data-view="candidates">Confirmações IA <span id="candidateBadge" class="badge" hidden>0</span></button>
         <button data-view="stock">Estoque</button>
-        <button data-view="catalog">Catálogo</button>
+        <button data-view="items">Itens</button>
+        <button data-view="categories">Categorias</button>
+        <button data-view="components">Componentes</button>
         <button data-view="admins">Administradores</button>
       </nav>
       <div class="session-box">
@@ -70,10 +72,21 @@
         <div id="stockList" class="table-list"></div>
       </section>
 
-      <section id="catalogView" class="view">
-        <div class="section-copy"><h2>Catálogo</h2><p>Visão consolidada dos produtos e do modo de estoque.</p></div>
-        <div class="toolbar"><button id="newItem" class="button primary">Novo item</button><button id="newComponent" class="button">Novo componente</button></div>
-        <div id="catalogList" class="table-list"></div>
+      <section id="itemsView" class="view">
+        <div class="section-heading"><div class="section-copy"><h2>Itens do cardápio</h2><p>Produtos organizados pela árvore de categorias.</p></div><button id="newItem" class="button primary">Novo item</button></div>
+        <div class="toolbar"><input id="itemSearch" type="search" placeholder="Buscar item"><select id="itemCategoryFilter"><option value="all">Todas as categorias</option></select></div>
+        <div id="itemList" class="catalog-sections"></div>
+      </section>
+
+      <section id="categoriesView" class="view">
+        <div class="section-heading"><div class="section-copy"><h2>Categorias</h2><p>Estrutura hierárquica usada para organizar o cardápio.</p></div><button id="newCategory" class="button primary">Nova categoria</button></div>
+        <div id="categoryTree" class="tree-list"></div>
+      </section>
+
+      <section id="componentsView" class="view">
+        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2><p>Ingredientes e opções reutilizados nas composições dos itens.</p></div><button id="newComponent" class="button primary">Novo componente</button></div>
+        <div class="toolbar"><input id="componentSearch" type="search" placeholder="Buscar componente"></div>
+        <div id="componentList" class="table-list"></div>
       </section>
 
       <section id="adminsView" class="view">
@@ -96,23 +109,43 @@
     </form>
   </dialog>
 
-  <dialog id="catalogDialog">
-    <form id="catalogForm" class="dialog-card">
-      <input id="catalogId" type="hidden"><input id="catalogOriginalKind" type="hidden">
-      <h2 id="catalogDialogTitle">Cadastro</h2>
-      <label>Tipo<select id="catalogKind"><option value="item">Produto do cardápio</option><option value="composition">Componente/insumo</option></select></label>
-      <label>Nome<input id="catalogName" required maxlength="100"></label>
-      <label id="catalogDescriptionLabel">Descrição<textarea id="catalogDescription" maxlength="500" rows="3"></textarea></label>
-      <label>Preço<input id="catalogPrice" type="number" min="0" step="0.01" required></label>
-      <label>Quantidade atual<input id="catalogStock" type="number" min="0" step="1" required></label>
-      <label id="catalogStockModeLabel">Controle de estoque<select id="catalogStockMode"><option value="direct">Direto</option><option value="composition">Por composição</option></select></label>
-      <label id="catalogMaxLabel">Limite padrão<input id="catalogMax" type="number" min="0" step="1" value="4"></label>
-      <label class="check-row"><input id="catalogActive" type="checkbox" checked> Ativo no catálogo</label>
-      <div class="dialog-actions"><button id="deleteCatalog" type="button" class="button danger-button" hidden>Excluir</button><span class="dialog-spacer"></span><button id="cancelCatalog" type="button" class="button">Cancelar</button><button class="button primary">Salvar</button></div>
+  <dialog id="itemDialog" class="wide-dialog">
+    <form id="itemForm" class="dialog-card wide-card">
+      <input id="itemId" type="hidden"><h2 id="itemDialogTitle">Item</h2>
+      <div class="form-grid"><label>Nome<input id="itemName" required maxlength="100"></label><label>Categoria<select id="itemCategory"><option value="">Sem categoria</option></select></label></div>
+      <label>Descrição<textarea id="itemDescription" maxlength="500" rows="3"></textarea></label>
+      <div class="form-grid"><label>Preço<input id="itemPrice" type="number" min="0" step="0.01" required></label><label>Prioridade<input id="itemPriority" type="number" step="1" value="0"></label></div>
+      <div class="form-grid"><label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label><label id="itemStockLabel">Quantidade atual<input id="itemStock" type="number" min="0" step="1" required></label></div>
+      <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
+      <fieldset><legend>Imagens</legend><label>Imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>Imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>Imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label></fieldset>
+      <fieldset id="itemCompositionField"><legend>Composição do item</legend><p class="fine-print">Associe componentes e defina como o cliente interage com cada um.</p><div id="itemCompositionList" class="association-list"></div></fieldset>
+      <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="categoryDialog">
+    <form id="categoryForm" class="dialog-card">
+      <input id="categoryId" type="hidden"><h2 id="categoryDialogTitle">Categoria</h2>
+      <label>Nome<input id="categoryName" required maxlength="100"></label>
+      <label>Categoria pai<select id="categoryParent"><option value="">Raiz</option></select></label>
+      <label>Modo de exibição<select id="categoryDisplay"><option value="lista">Lista</option><option value="lista-dupla">Lista dupla</option><option value="grade">Grade</option><option value="grid">Grid legado</option></select></label>
+      <label>Prioridade<input id="categoryPriority" type="number" step="1" value="0"></label>
+      <div class="dialog-actions"><button id="deleteCategory" type="button" class="button danger-button" hidden>Excluir categoria</button><span class="dialog-spacer"></span><button id="cancelCategory" type="button" class="button">Cancelar</button><button class="button primary">Salvar categoria</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="componentDialog">
+    <form id="componentForm" class="dialog-card">
+      <input id="componentId" type="hidden"><h2 id="componentDialogTitle">Componente</h2>
+      <label>Nome<input id="componentName" required maxlength="100"></label>
+      <div class="form-grid"><label>Preço global<input id="componentPrice" type="number" min="0" step="0.01" required></label><label>Quantidade atual<input id="componentStock" type="number" min="0" step="1" required></label></div>
+      <label>Limite padrão por item<input id="componentMax" type="number" min="0" step="1" value="4"></label>
+      <label class="check-row"><input id="componentTracks" type="checkbox" checked> Controlar estoque</label><label class="check-row"><input id="componentActive" type="checkbox" checked> Componente ativo</label>
+      <div class="dialog-actions"><button id="deleteComponent" type="button" class="button danger-button" hidden>Excluir componente</button><span class="dialog-spacer"></span><button id="cancelComponent" type="button" class="button">Cancelar</button><button class="button primary">Salvar componente</button></div>
     </form>
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261004-3"></script>
+  <script src="app.js?v=20261004-5"></script>
 </body>
 </html>
