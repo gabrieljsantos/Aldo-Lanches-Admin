@@ -72,6 +72,7 @@
 
       <section id="catalogView" class="view">
         <div class="section-copy"><h2>Catálogo</h2><p>Visão consolidada dos produtos e do modo de estoque.</p></div>
+        <div class="toolbar"><button id="newItem" class="button primary">Novo item</button><button id="newComponent" class="button">Novo componente</button></div>
         <div id="catalogList" class="table-list"></div>
       </section>
 
@@ -87,11 +88,27 @@
     <form id="stockForm" method="dialog" class="dialog-card">
       <input id="stockTargetKind" type="hidden"><input id="stockTargetId" type="hidden">
       <h2 id="stockDialogTitle">Ajustar estoque</h2>
-      <label>Operação<select id="stockOperation"><option value="set">Definir quantidade atual</option><option value="sales">Registrar N vendas</option></select></label>
+      <label>Operação<select id="stockOperation"><option value="set">Definir quantidade atual</option><option value="sale">Registrar N vendas</option></select></label>
       <label>Quantidade<input id="stockAmount" type="number" min="0" step="1" required></label>
       <label>Motivo<input id="stockReason" maxlength="120" placeholder="Venda presencial, reposição, correção..."></label>
       <p id="stockPreview" class="preview"></p>
-      <div class="dialog-actions"><button value="cancel" class="button">Cancelar</button><button id="confirmStock" value="default" class="button primary">Confirmar</button></div>
+      <div class="dialog-actions"><button id="cancelStock" type="button" class="button">Cancelar</button><button id="confirmStock" class="button primary">Confirmar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="catalogDialog">
+    <form id="catalogForm" class="dialog-card">
+      <input id="catalogId" type="hidden"><input id="catalogOriginalKind" type="hidden">
+      <h2 id="catalogDialogTitle">Cadastro</h2>
+      <label>Tipo<select id="catalogKind"><option value="item">Produto do cardápio</option><option value="composition">Componente/insumo</option></select></label>
+      <label>Nome<input id="catalogName" required maxlength="100"></label>
+      <label id="catalogDescriptionLabel">Descrição<textarea id="catalogDescription" maxlength="500" rows="3"></textarea></label>
+      <label>Preço<input id="catalogPrice" type="number" min="0" step="0.01" required></label>
+      <label>Quantidade atual<input id="catalogStock" type="number" min="0" step="1" required></label>
+      <label id="catalogStockModeLabel">Controle de estoque<select id="catalogStockMode"><option value="direct">Direto</option><option value="composition">Por composição</option></select></label>
+      <label id="catalogMaxLabel">Limite padrão<input id="catalogMax" type="number" min="0" step="1" value="4"></label>
+      <label class="check-row"><input id="catalogActive" type="checkbox" checked> Ativo no catálogo</label>
+      <div class="dialog-actions"><button id="deleteCatalog" type="button" class="button danger-button" hidden>Excluir</button><span class="dialog-spacer"></span><button id="cancelCatalog" type="button" class="button">Cancelar</button><button class="button primary">Salvar</button></div>
     </form>
   </dialog>
 
