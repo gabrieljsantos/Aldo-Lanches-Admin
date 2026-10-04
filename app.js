@@ -3,7 +3,7 @@
   const config = window.ALDO_ADMIN_CONFIG || {};
   const db = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
   const $ = (id) => document.getElementById(id);
-  const state = {session:null,isAdmin:false,items:[],compositions:[],orders:[],candidates:[],view:"orders"};
+  const state = {session:null,isAdmin:false,items:[],compositions:[],orders:[],candidates:[],view:"orders",liveChannel:null,booting:false};
   const titles = {orders:"Pedidos",candidates:"Confirmações IA",stock:"Estoque",catalog:"Catálogo",admins:"Administradores"};
   const statusLabels = {received:"Recebido",production:"Em produção",delivery:"Saiu para entrega",delivered:"Entregue"};
 
@@ -13,11 +13,14 @@
   async function query(table, select="*"){const {data,error}=await db.from(table).select(select);if(error)throw error;return data||[]}
 
   async function bootstrap(){
+    if(state.booting)return;state.booting=true;
+    try{
     const {data:{session}}=await db.auth.getSession();state.session=session;
     if(!session){show("login");return}
     const {data,error}=await db.rpc("is_admin");state.isAdmin=!error&&data===true;
     if(!state.isAdmin){show("denied");return}
     $("sessionEmail").textContent=session.user.email||"Administrador";show("app");await refreshAll();subscribe();
+    }finally{state.booting=false}
   }
   function show(which){$("loginView").hidden=which!=="login";$("deniedView").hidden=which!=="denied";$("appView").hidden=which!=="app"}
   async function login(){await db.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.href.split("#")[0]}})}
@@ -52,7 +55,7 @@
   async function candidate(id,action){const fn=action==="confirm"?"confirm_whatsapp_candidate":"discard_whatsapp_candidate";const {error}=await db.rpc(fn,{candidate_id:id});if(error)toast(error.message,true);else{toast(action==="confirm"?"Pedido confirmado.":"Candidato descartado.");await Promise.all([loadCandidates(),loadOrders(),loadStock()])}}
   async function addAdmin(event){event.preventDefault();const {error}=await db.rpc("grant_admin_by_email",{target_email:$("adminEmail").value.trim()});if(error)toast(error.message,true);else{toast("Administrador adicionado.");event.target.reset();await loadAdmins()}}
   async function removeAdmin(id){const {error}=await db.from("admin_users").delete().eq("user_id",id);if(error)toast(error.message,true);else{toast("Acesso removido.");await loadAdmins()}}
-  function subscribe(){db.channel("admin-live").on("postgres_changes",{event:"*",schema:"public",table:"orders"},loadOrders).on("postgres_changes",{event:"*",schema:"public",table:"whatsapp_order_candidates"},loadCandidates).subscribe()}
+  function subscribe(){if(state.liveChannel)return;state.liveChannel=db.channel("admin-live").on("postgres_changes",{event:"*",schema:"public",table:"orders"},loadOrders).on("postgres_changes",{event:"*",schema:"public",table:"whatsapp_order_candidates"},loadCandidates).subscribe()}
 
   $("googleLogin").addEventListener("click",login);$("logout").addEventListener("click",logout);$("deniedLogout").addEventListener("click",logout);$("refresh").addEventListener("click",refreshAll);$("nav").addEventListener("click",e=>e.target.closest("button")?.dataset.view&&switchView(e.target.closest("button").dataset.view));$("stockSearch").addEventListener("input",renderStock);$("stockKind").addEventListener("change",renderStock);$("stockAmount").addEventListener("input",updatePreview);$("stockOperation").addEventListener("change",updatePreview);$("stockForm").addEventListener("submit",saveStock);$("cancelStock").addEventListener("click",()=>$("stockDialog").close());$("adminForm").addEventListener("submit",addAdmin);$("newItem").addEventListener("click",()=>openCatalog("item"));$("newComponent").addEventListener("click",()=>openCatalog("composition"));$("catalogKind").addEventListener("change",syncCatalogFields);$("catalogForm").addEventListener("submit",saveCatalog);$("cancelCatalog").addEventListener("click",()=>$("catalogDialog").close());$("deleteCatalog").addEventListener("click",deleteCatalog);
   document.addEventListener("click",e=>{const stock=e.target.closest("[data-stock-id]");if(stock)openStock(stock.dataset.stockKind,stock.dataset.stockId);const catalog=e.target.closest("[data-catalog-id]");if(catalog)openCatalog(catalog.dataset.catalogKind,catalog.dataset.catalogId);const order=e.target.closest("[data-order]");if(order)transition(order.dataset.order,order.dataset.status);const confirm=e.target.closest("[data-candidate-confirm]");if(confirm)candidate(confirm.dataset.candidateConfirm,"confirm");const discard=e.target.closest("[data-candidate-discard]");if(discard)candidate(discard.dataset.candidateDiscard,"discard");const remove=e.target.closest("[data-admin-remove]");if(remove)removeAdmin(remove.dataset.adminRemove)});
