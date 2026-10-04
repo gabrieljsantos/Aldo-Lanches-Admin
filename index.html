@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261004-5">
+  <link rel="stylesheet" href="styles.css?v=20261004-6">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -117,7 +117,7 @@
       <div class="form-grid"><label>Preço<input id="itemPrice" type="number" min="0" step="0.01" required></label><label>Prioridade<input id="itemPriority" type="number" step="1" value="0"></label></div>
       <div class="form-grid"><label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label><label id="itemStockLabel">Quantidade atual<input id="itemStock" type="number" min="0" step="1" required></label></div>
       <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
-      <fieldset><legend>Imagens</legend><label>Imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>Imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>Imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label></fieldset>
+      <fieldset><legend>Imagens do item</legend><label>Enviar imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>Enviar imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>Enviar imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>Ou usar URL da imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>URL da imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>URL da imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><p class="fine-print">As imagens enviadas ficam vinculadas ao item no bucket do catálogo.</p></fieldset>
       <fieldset id="itemCompositionField"><legend>Composição do item</legend><p class="fine-print">Associe componentes e defina como o cliente interage com cada um.</p><div id="itemCompositionList" class="association-list"></div></fieldset>
       <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
     </form>
@@ -146,6 +146,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261004-5"></script>
+  <script src="app.js?v=20261004-6"></script>
 </body>
 </html>
