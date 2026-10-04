@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Aldo Lanches — Administração</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="toast" class="toast" hidden></div>
+
+  <main id="loginView" class="login-shell">
+    <section class="login-card">
+      <span class="eyebrow">Smart Store Hub</span>
+      <h1>Central da Aldo Lanches</h1>
+      <p>Pedidos, confirmações da IA, estoque e catálogo em um só lugar.</p>
+      <button id="googleLogin" class="button primary">Entrar com Google</button>
+      <p class="fine-print">Somente contas autorizadas como administradoras terão acesso.</p>
+    </section>
+  </main>
+
+  <div id="deniedView" class="login-shell" hidden>
+    <section class="login-card">
+      <span class="eyebrow danger">Acesso restrito</span>
+      <h1>Conta sem permissão</h1>
+      <p>Seu login Google é válido, mas esta conta não está cadastrada como administradora.</p>
+      <button id="deniedLogout" class="button">Sair</button>
+    </section>
+  </div>
+
+  <div id="appView" class="app-shell" hidden>
+    <aside class="sidebar">
+      <div class="brand"><span>AL</span><strong>Aldo Admin</strong></div>
+      <nav id="nav" class="nav">
+        <button data-view="orders" class="active">Pedidos</button>
+        <button data-view="candidates">Confirmações IA <span id="candidateBadge" class="badge" hidden>0</span></button>
+        <button data-view="stock">Estoque</button>
+        <button data-view="catalog">Catálogo</button>
+        <button data-view="admins">Administradores</button>
+      </nav>
+      <div class="session-box">
+        <span id="sessionEmail"></span>
+        <button id="logout" class="link-button">Sair</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div><span class="eyebrow">Operação em tempo real</span><h1 id="viewTitle">Pedidos</h1></div>
+        <button id="refresh" class="button">Atualizar</button>
+      </header>
+
+      <section id="ordersView" class="view active">
+        <div class="status-columns" id="ordersBoard"></div>
+      </section>
+
+      <section id="candidatesView" class="view">
+        <div class="section-copy"><h2>Pedidos interpretados do WhatsApp</h2><p>A IA apenas lê. Confira antes de transformar o rascunho em pedido.</p></div>
+        <div id="candidateList" class="card-grid"></div>
+      </section>
+
+      <section id="stockView" class="view">
+        <div class="section-copy"><h2>Disponibilidade e estoque</h2><p>Defina o saldo atual ou registre vendas presenciais agregadas.</p></div>
+        <div class="toolbar"><input id="stockSearch" type="search" placeholder="Buscar item ou componente"><select id="stockKind"><option value="all">Tudo</option><option value="item">Itens diretos</option><option value="composition">Componentes</option></select></div>
+        <div id="stockList" class="table-list"></div>
+      </section>
+
+      <section id="catalogView" class="view">
+        <div class="section-copy"><h2>Catálogo</h2><p>Visão consolidada dos produtos e do modo de estoque.</p></div>
+        <div id="catalogList" class="table-list"></div>
+      </section>
+
+      <section id="adminsView" class="view">
+        <div class="section-copy"><h2>Administradores</h2><p>Todos os administradores possuem acesso completo.</p></div>
+        <form id="adminForm" class="inline-form"><input id="adminEmail" type="email" required placeholder="email@gmail.com"><button class="button primary">Adicionar</button></form>
+        <div id="adminList" class="table-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="stockDialog">
+    <form id="stockForm" method="dialog" class="dialog-card">
+      <input id="stockTargetKind" type="hidden"><input id="stockTargetId" type="hidden">
+      <h2 id="stockDialogTitle">Ajustar estoque</h2>
+      <label>Operação<select id="stockOperation"><option value="set">Definir quantidade atual</option><option value="sales">Registrar N vendas</option></select></label>
+      <label>Quantidade<input id="stockAmount" type="number" min="0" step="1" required></label>
+      <label>Motivo<input id="stockReason" maxlength="120" placeholder="Venda presencial, reposição, correção..."></label>
+      <p id="stockPreview" class="preview"></p>
+      <div class="dialog-actions"><button value="cancel" class="button">Cancelar</button><button id="confirmStock" value="default" class="button primary">Confirmar</button></div>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
