@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light">
   <title>Aldo Lanches — Administração</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261004-6">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261009-1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -35,7 +35,7 @@
 
   <div id="appView" class="app-shell" hidden>
     <aside class="sidebar">
-      <div class="brand"><span>AL</span><strong>Aldo Admin</strong></div>
+      <div class="brand"><img src="https://raw.githubusercontent.com/gabrieljsantos/Cardapio_Aldo_Lanches/main/assets/Aldo%20Lanches%20logo.jpg" alt="Logo Aldo Lanches"><div><strong>Aldo Lanches</strong><small>Administração</small></div></div>
       <nav id="nav" class="nav">
         <button data-view="orders" class="active">Pedidos</button>
         <button data-view="candidates">Confirmações IA <span id="candidateBadge" class="badge" hidden>0</span></button>
@@ -67,9 +67,10 @@
       </section>
 
       <section id="stockView" class="view">
-        <div class="section-copy"><h2>Disponibilidade e estoque</h2><p>Defina o saldo atual ou registre vendas presenciais agregadas.</p></div>
-        <div class="toolbar"><input id="stockSearch" type="search" placeholder="Buscar item ou componente"><select id="stockKind"><option value="all">Tudo</option><option value="item">Itens diretos</option><option value="composition">Componentes</option></select></div>
-        <div id="stockList" class="table-list"></div>
+        <div class="section-copy"><h2>Inventário</h2><p>O mesmo controle operacional do cardápio: ocultar, finalizar e ajustar unidades.</p></div>
+        <div class="inventory-metrics"><span id="stockTotal">Itens: 0</span><span id="stockVisible">Visíveis: 0</span><span id="stockFinished">Finalizados: 0</span><span id="stockHidden">Ocultos: 0</span></div>
+        <div class="toolbar"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"><select id="stockKind"><option value="all">Itens e componentes</option><option value="item">Itens do cardápio</option><option value="composition">Componentes</option></select><select id="stockState"><option value="all">Todos os estados</option><option value="visible">Visíveis</option><option value="finished">Finalizados</option><option value="hidden">Ocultos</option></select></div>
+        <div id="stockList" class="inventory-groups"></div>
       </section>
 
       <section id="itemsView" class="view">
@@ -146,6 +147,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261004-6"></script>
+  <script src="app.js?v=20261009-1"></script>
 </body>
 </html>
