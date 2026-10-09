@@ -30,9 +30,17 @@
 
   async function loadOrders(){const revision=++state.orderLoadRevision;const orders=await query("orders","*,order_items(*,order_item_components(*))");if(revision!==state.orderLoadRevision)return;state.orders=orders;state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
   function orderItemMarkup(item,expanded=false){
-    const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id));
+    const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id||item.item_id))||state.items.find(entry=>entry.name?.trim().toLocaleLowerCase()===String(item.item_name||item.name||"").trim().toLocaleLowerCase());
     const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
-    const changes=(item.order_item_components||[]).filter(component=>{
+    const quantity=Math.max(1,Number(item.quantity)||1);
+    const rawOptionsText=item.snapshot?.options_text||item.snapshot?.optionsText||item.options_text||item.modifications||"";
+    const optionsText=Array.isArray(rawOptionsText)?rawOptionsText.join("|"):rawOptionsText;
+    let changes=String(optionsText).split("|").map(part=>part.trim()).filter(Boolean).map(text=>{
+      const normalized=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase();
+      const kind=/^remover\b/.test(normalized)?"remove":/^adicionar\b/.test(normalized)?"add":"other";
+      return `<span class="order-change-chip ${kind}">${escapeHtml(text)}</span>`;
+    });
+    if(!changes.length)changes=(item.order_item_components||[]).filter(component=>{
       const selected=Number(component.snapshot?.per_item_quantity??component.quantity);
       const standard=Number(component.snapshot?.default_quantity??component.free_quantity??0);
       return selected!==standard;
@@ -40,12 +48,15 @@
       const selected=Number(component.snapshot?.per_item_quantity??component.quantity);
       const standard=Number(component.snapshot?.default_quantity??component.free_quantity??0);
       const difference=selected-standard;
-      const total=Math.abs(difference)*Number(item.quantity||1);
-      return `${difference>0?"+":"−"}${total} ${escapeHtml(component.component_name)}`;
+      const total=Math.abs(difference)*quantity;
+      const prefix=difference>0?"Adicionar":"Remover";
+      const amount=total>1?`${total}x `:"";
+      return `<span class="order-change-chip ${difference>0?"add":"remove"}">${prefix} ${amount}${escapeHtml(component.component_name)}</span>`;
     });
     const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
     const note=item.notes?`<small>${escapeHtml(item.notes)}</small>`:"";
-    return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}${changes.length?` ${changes.join(" ")}`:""}</strong>${note}</div></div>`;
+    const quantityBadge=quantity>1?`<span class="item-quantity-badge" data-quantity="${Math.min(quantity,8)}">${quantity}</span>`:"";
+    return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div class="order-item-copy"><div class="order-item-title">${quantityBadge}<strong>${escapeHtml(item.item_name||item.name||"Item")}</strong></div>${changes.length?`<div class="order-item-changes">${changes.join("")}</div>`:""}${note}</div></div>`;
   }
   function renderOrders(){
     const pending=state.orders.filter(order=>order.status==="pending_confirmation");
@@ -65,14 +76,15 @@
       const canPrepare=["received","confirmed"].includes(order.status),canDeliver=order.status==="production";
       const id=escapeHtml(order.id);
       const actions=tab===-1?`<button class="button order-action review-accept" data-order="${id}" data-status="received" aria-label="Aceitar pedido" title="Aceitar">✓</button><button class="button order-action review-reject" data-order="${id}" data-status="cancelled" aria-label="Recusar pedido" title="Recusar">×</button>`:tab===1?`<button class="button delivery-done icon-action" data-order="${id}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:tab===2?"":`<button class="button order-action icon-action" data-order="${id}" data-status="preparing" aria-label="Preparando" title="Preparando" ${canPrepare?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.4 9H5.4L4 10Z"/><path d="M7 7c0-1 1-1 1-2m4 2c0-1 1-1 1-2m4 2c0-1 1-1 1-2M3 21h18"/></svg></button><button class="button order-action icon-action" data-order="${id}" data-status="delivery" aria-label="Saiu para entrega" title="Saiu para entrega" ${canDeliver?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M16 13h4"/></svg></button>`;
-      return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<button class="button view-order-button" data-order-view="${id}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
+      return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<strong class="order-card-total">${money(order.total)}</strong><button class="button view-order-button" data-order-view="${id}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
     };
     const candidateCard=candidate=>{
       const detail=candidate.interpreted_order||{};
       const address=detail.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
-      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>`<div class="order-item"><span class="order-item-photo" aria-hidden="true"></span><div><strong>• ${Number(item.quantity)||1}x ${escapeHtml(item.item_name||item.name||"Item")}${item.modifications?` ${escapeHtml(item.modifications)}`:""}</strong>${item.notes?`<small>${escapeHtml(item.notes)}</small>`:""}</div></div>`).join("");
-      return `<article class="order-row candidate-order-row"><div class="order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}<button class="button view-order-button" data-candidate-view="${escapeHtml(candidate.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions"><button class="button order-action review-accept" data-candidate-confirm="${escapeHtml(candidate.id)}" aria-label="Confirmar pedido" title="Confirmar">✓</button><button class="button order-action review-reject" data-candidate-discard="${escapeHtml(candidate.id)}" aria-label="Descartar pedido" title="Descartar">×</button></div></article>`;
+      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>orderItemMarkup({...item,item_name:item.item_name||item.name,snapshot:item.snapshot||{options_text:item.options_text||item.modifications||""}})).join("");
+      const total=Number.isFinite(Number(detail.total))?`<strong class="order-card-total">${money(detail.total)}</strong>`:"";
+      return `<article class="order-row candidate-order-row"><div class="order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}${total}<button class="button view-order-button" data-candidate-view="${escapeHtml(candidate.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions"><button class="button order-action review-accept" data-candidate-confirm="${escapeHtml(candidate.id)}" aria-label="Confirmar pedido" title="Confirmar">✓</button><button class="button order-action review-reject" data-candidate-discard="${escapeHtml(candidate.id)}" aria-label="Descartar pedido" title="Descartar">×</button></div></article>`;
     };
     const rows=state.orderTab===-1?[...pending.map(order=>({created_at:order.created_at,html:orderCard(order,-1)})),...pendingCandidates.map(candidate=>({created_at:candidate.created_at,html:candidateCard(candidate)}))].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(row=>row.html):state.orderTab===1?deliveryOrders.map(order=>orderCard(order,1)):state.orderTab===2?delivered.map(order=>orderCard(order,2)):active.map(order=>orderCard(order,0));
     $("ordersBoard").innerHTML=rows.join("");
@@ -86,7 +98,7 @@
       });
       const counts=[...categoryCounts].map(([name,quantity])=>`${quantity} ${escapeHtml(name)}`).join(" · ");
       const deliveredAction=list===deliveryOrders?`<button class="button delivery-done icon-action" data-order="${escapeHtml(order.id)}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:"";
-      return `<div class="compact-order-name ${deliveredAction?"has-action":""}"><div><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}</div>${deliveredAction}</div>`;
+      return `<div class="compact-order-name ${deliveredAction?"has-action":""}"><div><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}<small class="compact-order-total">${money(order.total)}</small></div>${deliveredAction}</div>`;
     }).join("");
     $("deliveryOrders").innerHTML=compact(deliveryOrders);
     $("deliveredOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivered").slice().reverse());
@@ -97,16 +109,17 @@
       const candidate=state.candidates.find(entry=>String(entry.id)===String(id));if(!candidate)return;
       const detail=candidate.interpreted_order||{},address=detail.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
-      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>`<div class="order-item expanded-order-item"><span class="order-item-photo" aria-hidden="true"></span><div><strong>• ${Number(item.quantity)||1}x ${escapeHtml(item.item_name||item.name||"Item")}${item.modifications?` ${escapeHtml(item.modifications)}`:""}</strong>${item.notes?`<small>${escapeHtml(item.notes)}</small>`:""}</div></div>`).join("");
+      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>orderItemMarkup({...item,item_name:item.item_name||item.name,snapshot:item.snapshot||{options_text:item.options_text||item.modifications||""}},true)).join("");
       const notes=detail.notes?`<p class="expanded-order-note">${escapeHtml(detail.notes)}</p>`:"";
-      $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}`;
+      const total=Number.isFinite(Number(detail.total))?`<strong class="expanded-order-total">${money(detail.total)}</strong>`:"";
+      $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}${total}`;
       $("orderExpandedDialog").showModal();return;
     }
     const address=order.delivery_address||{};
     const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
     const items=(order.order_items||[]).map(item=>orderItemMarkup(item,true)).join("");
     const notes=order.notes?`<p class="expanded-order-note">${escapeHtml(order.notes)}</p>`:"";
-    $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}`;
+    $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}<strong class="expanded-order-total">${money(order.total)}</strong>`;
     $("orderExpandedDialog").showModal();
   }
 
