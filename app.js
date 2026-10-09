@@ -9,6 +9,7 @@
   const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map()};
   const titles = {home:"Administração",orders:"Pedidos",candidates:"Confirmações IA",stock:"Inventário",items:"Itens",categories:"Categorias",components:"Componentes",customers:"Cadastros",admins:"Administradores"};
   const orderActions = [["confirmed","Confirmar pedido"],["production","Preparando"],["delivery","Saiu para entrega"]];
+  let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
   const linkLabels = {delta:"Ajustável",scalable:"Escalável",complementary:"Complementar"};
 
@@ -35,12 +36,16 @@
         const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
         const components=(item.order_item_components||[]).filter(component=>Number(component.quantity)>0).map(component=>`${escapeHtml(component.component_name)}${Number(component.quantity)>1?` ×${Number(component.quantity)}`:""}`).join(" · ");
         const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
-        return `<div class="order-item">${image}<div><strong>${Number(item.quantity)}× ${escapeHtml(item.item_name)}</strong>${components?`<small>${components}</small>`:""}</div></div>`;
+        return `<div class="order-item">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}</strong>${components?`<small>${components.split(" · ").map(name=>`<span>　${name}</span>`).join("")}</small>`:""}</div></div>`;
       }).join("");
       const canAdvance={confirmed:order.status==="received",production:order.status==="confirmed",delivery:order.status==="production"};
       const actions=orderActions.map(([status,label])=>`<button class="button order-action" data-order="${escapeHtml(order.id)}" data-status="${status}" ${canAdvance[status]?"":"disabled"}>${label}</button>`).join("");
       return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
     }).join("");
+    const customerName=order=>escapeHtml(order.customer_known_as||order.customer_name||"");
+    const compact=(list)=>list.map(order=>`<div class="compact-order-name">${customerName(order)}</div>`).join("");
+    $("deliveryOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivery"));
+    $("deliveredOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivered").slice().reverse());
   }
 
   async function transitionOrder(id,status){const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
@@ -98,7 +103,7 @@
 
   async function loadAdmins(){try{const {data,error}=await db.rpc("list_admins");if(error)throw error;$("adminList").innerHTML=(data||[]).map(a=>`<article class="data-row"><div><strong>${escapeHtml(a.full_name||a.email||a.user_id)}</strong><br><small>${escapeHtml(a.email||a.user_id)}</small></div><span>${new Date(a.granted_at).toLocaleDateString("pt-BR")}</span><span></span><span></span>${a.user_id!==state.session?.user.id?`<button class="button" data-admin-remove="${a.user_id}">Remover</button>`:"<span>Você</span>"}</article>`).join("")}catch(error){$("adminList").innerHTML=`<p>${escapeHtml(error.message)}</p>`}}
   async function loadCustomers(){try{const {data,error}=await db.rpc("list_customer_profiles");if(error)throw error;$("customerList").innerHTML=(data||[]).map(c=>`<article class="data-row"><div><strong>${escapeHtml(c.known_as||c.full_name||c.email||c.user_id)}</strong><br><small>${escapeHtml(c.email||c.user_id)}${c.phone?` · ${escapeHtml(c.phone)}`:""}</small></div><span>${new Date(c.created_at).toLocaleDateString("pt-BR")}</span><span></span><span></span><button class="button danger-button" data-customer-remove="${escapeHtml(c.user_id)}">Apagar cadastro</button></article>`).join("")||"<p>Nenhum cadastro.</p>"}catch(error){$("customerList").innerHTML=`<p>${escapeHtml(error.message)}</p>`}}
-  function switchView(view){if(!viewNames.includes(view))view="home";state.view=view;localStorage.setItem("aldoAdminViewV2",view);if(location.hash!==`#${view}`)location.hash=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view+"View"));document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===view));$("viewTitle").textContent=titles[view];$("refresh").hidden=view==="home";$("appView").classList.toggle("orders-mode",view==="orders");$("appView").classList.toggle("home-mode",view==="home")}
+  function switchView(view){if(!viewNames.includes(view))view="home";state.view=view;localStorage.setItem("aldoAdminViewV2",view);if(location.hash!==`#${view}`)location.hash=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view+"View"));document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===view));$("viewTitle").textContent=titles[view];$("refresh").hidden=view==="home";$("appView").classList.toggle("orders-mode",view==="orders");$("appView").classList.toggle("home-mode",view==="home");if(orderRefreshTimer){clearInterval(orderRefreshTimer);orderRefreshTimer=null}if(view==="orders")orderRefreshTimer=setInterval(()=>{if(!document.hidden&&state.view==="orders")loadOrders().catch(error=>toast(error.message,true))},10000)}
   async function candidate(id,action){const fn=action==="confirm"?"confirm_whatsapp_candidate":"discard_whatsapp_candidate";const {error}=await db.rpc(fn,{candidate_id:id});if(error)toast(error.message,true);else{toast(action==="confirm"?"Pedido confirmado.":"Candidato descartado.");await Promise.all([loadCandidates(),loadOrders(),loadCatalog()])}}
   async function addAdmin(event){event.preventDefault();const {error}=await db.rpc("grant_admin_by_email",{target_email:$("adminEmail").value.trim()});if(error)toast(error.message,true);else{toast("Administrador adicionado.");event.target.reset();await loadAdmins()}}
   async function removeAdmin(id){const {error}=await db.from("admin_users").delete().eq("user_id",id);if(error)toast(error.message,true);else{toast("Acesso removido.");await loadAdmins()}}

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-12">
+  <link rel="stylesheet" href="styles.css?v=20261009-13">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -69,7 +69,10 @@
             <div class="orders-list" id="ordersBoard"></div>
           </section>
           <aside class="orders-side-panel">
-            <section class="orders-secondary-panel"><div id="orderDetail" class="order-detail"></div></section>
+            <div class="orders-side-stacks">
+              <section class="orders-secondary-panel orders-delivery-panel"><div id="deliveryOrders" class="compact-order-list"></div></section>
+              <section class="orders-secondary-panel orders-delivered-panel"><div id="deliveredOrders" class="compact-order-list"></div></section>
+            </div>
             <div class="orders-controls"><button class="button home-return" data-view="home">← Início</button><button id="ordersRefresh" class="button">Atualizar</button></div>
           </aside>
         </div>
@@ -166,6 +169,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-12"></script>
+  <script src="app.js?v=20261009-13"></script>
 </body>
 </html>
