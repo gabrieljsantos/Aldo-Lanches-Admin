@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-17">
+  <link rel="stylesheet" href="styles.css?v=20261009-18">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -64,6 +64,13 @@
       </section>
 
       <section id="ordersView" class="view">
+        <nav id="ordersTabs" class="orders-tabs" role="tablist" aria-label="Navegação dos pedidos">
+          <button type="button" role="tab" data-order-tab="-1" aria-label="Pedidos aguardando confirmação" title="Aguardando confirmação">−1 <span data-order-count="pending">0</span></button>
+          <button type="button" role="tab" data-order-tab="0" aria-label="Pedidos ativos" title="Pedidos ativos">0 <span data-order-count="active">0</span></button>
+          <button type="button" role="tab" data-order-tab="1" aria-label="Pedidos em entrega" title="Em entrega">1 <span data-order-count="delivery">0</span></button>
+          <button type="button" role="tab" data-order-tab="2" aria-label="Pedidos entregues" title="Entregues">2 <span data-order-count="delivered">0</span></button>
+          <button id="orderSettingsOpen" class="orders-settings-open" type="button" aria-label="Configurar aceitação automática" title="Configurações">⚙</button>
+        </nav>
         <div class="orders-layout">
           <section class="orders-primary-panel">
             <div class="orders-list" id="ordersBoard"></div>
@@ -81,6 +88,14 @@
       <dialog id="orderExpandedDialog" class="order-expanded-dialog">
         <button type="button" class="order-expanded-close" aria-label="Fechar" title="Fechar">×</button>
         <div id="orderExpandedContent" class="order-expanded-content"></div>
+      </dialog>
+
+      <dialog id="orderSettingsDialog" class="order-settings-dialog">
+        <form id="orderSettingsForm" class="dialog-card">
+          <h2>Pedidos do site</h2>
+          <label class="check-row"><input id="autoAcceptSiteOrders" type="checkbox" checked> Aceitar automaticamente</label>
+          <div class="dialog-actions"><button id="orderSettingsCancel" type="button" class="button">Cancelar</button><button class="button primary">Salvar</button></div>
+        </form>
       </dialog>
 
       <section id="candidatesView" class="view">
@@ -174,6 +189,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-17"></script>
+  <script src="app.js?v=20261009-18"></script>
 </body>
 </html>

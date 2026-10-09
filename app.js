@@ -6,7 +6,8 @@
   const viewNames = ["home","orders","candidates","stock","items","categories","components","customers","admins"];
   const routeView = location.hash.slice(1);
   const savedView = viewNames.includes(routeView) ? routeView : localStorage.getItem("aldoAdminViewV2");
-  const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map()};
+  const savedOrderTab=Number(localStorage.getItem("aldoAdminOrdersTab")||0);
+  const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map(),orderTab:[-1,0,1,2].includes(savedOrderTab)?savedOrderTab:0,autoAcceptSiteOrders:true};
   const titles = {home:"Administração",orders:"Pedidos",candidates:"Confirmações IA",stock:"Inventário",items:"Itens",categories:"Categorias",components:"Componentes",customers:"Cadastros",admins:"Administradores"};
   let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
@@ -22,7 +23,10 @@
   async function bootstrap(){if(state.booting)return;state.booting=true;show("loading");try{const {data:{session}}=await db.auth.getSession();state.session=session;if(!session){show("login");return}const {data,error}=await db.rpc("is_admin");state.isAdmin=!error&&data===true;if(!state.isAdmin){show("denied");return}$("sessionEmail").textContent=session.user.email||"Administrador";await refreshAll();switchView(state.view);subscribe();show("app")}catch(error){show("login");toast(`Não foi possível carregar a sessão: ${error.message}`,true)}finally{state.booting=false}}
   async function login(){await db.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}})}
   async function logout(){await db.auth.signOut();location.reload()}
-  async function refreshAll(){try{await Promise.all([loadOrders(),loadCandidates(),loadCatalog(),loadAdmins(),loadCustomers()])}catch(error){toast(error.message,true)}}
+  async function refreshAll(){try{await Promise.all([loadOrders(),loadCandidates(),loadCatalog(),loadAdmins(),loadCustomers(),loadOrderSettings()])}catch(error){toast(error.message,true)}}
+
+  async function loadOrderSettings(){try{const {data,error}=await db.rpc("get_order_auto_accept");if(error)throw error;state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders}catch(error){toast(`Configuração de pedidos indisponível: ${error.message}`,true)}}
+  async function saveOrderSettings(event){event.preventDefault();const enabled=$("autoAcceptSiteOrders").checked;const {data,error}=await db.rpc("set_order_auto_accept",{p_enabled:enabled});if(error){toast(error.message,true);return}state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders;$("orderSettingsDialog").close();toast("Configuração salva.")}
 
   async function loadOrders(){state.orders=await query("orders","*,order_items(*,order_item_components(*))");state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
   function orderItemMarkup(item,expanded=false){
@@ -44,17 +48,35 @@
     return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}${changes.length?` ${changes.join(" ")}`:""}</strong>${note}</div></div>`;
   }
   function renderOrders(){
-    const rows=state.orders.filter(order=>!['delivered','cancelled'].includes(order.status));
-    $("ordersBoard").innerHTML=rows.map(order=>{
+    const pending=state.orders.filter(order=>order.status==="pending_confirmation");
+    const pendingCandidates=state.candidates;
+    const active=state.orders.filter(order=>["received","confirmed","production"].includes(order.status));
+    const deliveryOrders=state.orders.filter(order=>order.status==="delivery");
+    const delivered=state.orders.filter(order=>order.status==="delivered").slice().reverse();
+    [["pending",pending.length+pendingCandidates.length],["active",active.length],["delivery",deliveryOrders.length],["delivered",delivered.length]].forEach(([key,count])=>{
+      const badge=document.querySelector(`[data-order-count="${key}"]`);if(badge)badge.textContent=count;
+    });
+    $("ordersView").dataset.orderTab=String(state.orderTab);
+    document.querySelectorAll("[data-order-tab]").forEach(tab=>{const selected=Number(tab.dataset.orderTab)===state.orderTab;tab.classList.toggle("active",selected);tab.setAttribute("aria-selected",String(selected))});
+    const orderCard=(order,tab)=>{
       const address=order.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
       const items=(order.order_items||[]).map(item=>orderItemMarkup(item)).join("");
       const canPrepare=["received","confirmed"].includes(order.status),canDeliver=order.status==="production";
-      const actions=`<button class="button order-action icon-action" data-order="${escapeHtml(order.id)}" data-status="preparing" aria-label="Preparando" title="Preparando" ${canPrepare?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.4 9H5.4L4 10Z"/><path d="M7 7c0-1 1-1 1-2m4 2c0-1 1-1 1-2m4 2c0-1 1-1 1-2M3 21h18"/></svg></button><button class="button order-action icon-action" data-order="${escapeHtml(order.id)}" data-status="delivery" aria-label="Saiu para entrega" title="Saiu para entrega" ${canDeliver?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M16 13h4"/></svg></button>`;
-      return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<button class="button view-order-button" data-order-view="${escapeHtml(order.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
-    }).join("");
+      const id=escapeHtml(order.id);
+      const actions=tab===-1?`<button class="button order-action review-accept" data-order="${id}" data-status="received" aria-label="Aceitar pedido" title="Aceitar">✓</button><button class="button order-action review-reject" data-order="${id}" data-status="cancelled" aria-label="Recusar pedido" title="Recusar">×</button>`:tab===1?`<button class="button delivery-done icon-action" data-order="${id}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:tab===2?"":`<button class="button order-action icon-action" data-order="${id}" data-status="preparing" aria-label="Preparando" title="Preparando" ${canPrepare?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.4 9H5.4L4 10Z"/><path d="M7 7c0-1 1-1 1-2m4 2c0-1 1-1 1-2m4 2c0-1 1-1 1-2M3 21h18"/></svg></button><button class="button order-action icon-action" data-order="${id}" data-status="delivery" aria-label="Saiu para entrega" title="Saiu para entrega" ${canDeliver?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M16 13h4"/></svg></button>`;
+      return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<button class="button view-order-button" data-order-view="${id}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
+    };
+    const candidateCard=candidate=>{
+      const detail=candidate.interpreted_order||{};
+      const address=detail.delivery_address||{};
+      const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
+      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>`<div class="order-item"><span class="order-item-photo" aria-hidden="true"></span><div><strong>• ${Number(item.quantity)||1}x ${escapeHtml(item.item_name||item.name||"Item")}${item.modifications?` ${escapeHtml(item.modifications)}`:""}</strong>${item.notes?`<small>${escapeHtml(item.notes)}</small>`:""}</div></div>`).join("");
+      return `<article class="order-row candidate-order-row"><div class="order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}<button class="button view-order-button" data-candidate-view="${escapeHtml(candidate.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions"><button class="button order-action review-accept" data-candidate-confirm="${escapeHtml(candidate.id)}" aria-label="Confirmar pedido" title="Confirmar">✓</button><button class="button order-action review-reject" data-candidate-discard="${escapeHtml(candidate.id)}" aria-label="Descartar pedido" title="Descartar">×</button></div></article>`;
+    };
+    const rows=state.orderTab===-1?[...pending.map(order=>({created_at:order.created_at,html:orderCard(order,-1)})),...pendingCandidates.map(candidate=>({created_at:candidate.created_at,html:candidateCard(candidate)}))].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(row=>row.html):state.orderTab===1?deliveryOrders.map(order=>orderCard(order,1)):state.orderTab===2?delivered.map(order=>orderCard(order,2)):active.map(order=>orderCard(order,0));
+    $("ordersBoard").innerHTML=rows.join("");
     const customerName=order=>escapeHtml(order.customer_known_as||order.customer_name||"");
-    const deliveryOrders=state.orders.filter(order=>order.status==="delivery");
     const compact=(list)=>list.map(order=>{
       const categoryCounts=new Map();
       (order.order_items||[]).forEach(item=>{
@@ -71,7 +93,15 @@
   }
   function openOrderDetails(id){
     const order=state.orders.find(entry=>String(entry.id)===String(id));
-    if(!order)return;
+    if(!order){
+      const candidate=state.candidates.find(entry=>String(entry.id)===String(id));if(!candidate)return;
+      const detail=candidate.interpreted_order||{},address=detail.delivery_address||{};
+      const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
+      const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>`<div class="order-item expanded-order-item"><span class="order-item-photo" aria-hidden="true"></span><div><strong>• ${Number(item.quantity)||1}x ${escapeHtml(item.item_name||item.name||"Item")}${item.modifications?` ${escapeHtml(item.modifications)}`:""}</strong>${item.notes?`<small>${escapeHtml(item.notes)}</small>`:""}</div></div>`).join("");
+      const notes=detail.notes?`<p class="expanded-order-note">${escapeHtml(detail.notes)}</p>`:"";
+      $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}`;
+      $("orderExpandedDialog").showModal();return;
+    }
     const address=order.delivery_address||{};
     const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
     const items=(order.order_items||[]).map(item=>orderItemMarkup(item,true)).join("");
@@ -80,10 +110,10 @@
     $("orderExpandedDialog").showModal();
   }
 
-  async function transitionOrder(id,status){if(status==="preparing"){const order=state.orders.find(entry=>String(entry.id)===String(id));if(order?.status==="received"){const confirmation=await db.rpc("transition_order",{target_order:id,next_status:"confirmed"});if(confirmation.error){toast(confirmation.error.message,true);return}}status="production"}const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
+  async function transitionOrder(id,status){if(status==="cancelled"&&!confirm("Recusar este pedido?"))return;if(status==="preparing"){const order=state.orders.find(entry=>String(entry.id)===String(id));if(order?.status==="received"){const confirmation=await db.rpc("transition_order",{target_order:id,next_status:"confirmed"});if(confirmation.error){toast(confirmation.error.message,true);return}}status="production"}const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
 
   async function loadCandidates(){state.candidates=(await query("whatsapp_order_candidates")).filter(c=>c.status==="pending").sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderCandidates()}
-  function renderCandidates(){const homeBadge=$("candidateHomeBadge");homeBadge.textContent=state.candidates.length;homeBadge.hidden=!state.candidates.length;$("candidateList").innerHTML=state.candidates.map(c=>`<article class="candidate-card"><h3>Conversa ${escapeHtml(c.conversation_key)}</h3><div class="meta"><span class="pill">Confiança ${c.confidence==null?"—":Math.round(c.confidence*100)+"%"}</span><span>${new Date(c.created_at).toLocaleString("pt-BR")}</span></div><pre>${escapeHtml(JSON.stringify(c.interpreted_order,null,2))}</pre><div class="actions"><button class="button primary" data-candidate-confirm="${c.id}">Confirmar</button><button class="button" data-candidate-discard="${c.id}">Descartar</button></div></article>`).join("")||"<p>Nenhum candidato aguardando confirmação.</p>"}
+  function renderCandidates(){const homeBadge=$("candidateHomeBadge");homeBadge.textContent=state.candidates.length;homeBadge.hidden=!state.candidates.length;$("candidateList").innerHTML=state.candidates.map(c=>`<article class="candidate-card"><h3>Conversa ${escapeHtml(c.conversation_key)}</h3><div class="meta"><span class="pill">Confiança ${c.confidence==null?"—":Math.round(c.confidence*100)+"%"}</span><span>${new Date(c.created_at).toLocaleString("pt-BR")}</span></div><pre>${escapeHtml(JSON.stringify(c.interpreted_order,null,2))}</pre><div class="actions"><button class="button primary" data-candidate-confirm="${c.id}">Confirmar</button><button class="button" data-candidate-discard="${c.id}">Descartar</button></div></article>`).join("")||"<p>Nenhum candidato aguardando confirmação.</p>";renderOrders()}
 
   async function loadCatalog(){[state.items,state.categories,state.components,state.associations]=await Promise.all([query("items","id,name,description,price,stock,category_id,photo_url_1,photo_url_2,photo_url_3,sort_priority,stock_mode,is_active"),query("node_category","id,name,parent_id,display_mode,sort_priority"),query("composition","id,name,stock,price,is_active,max_quantity,tracks_stock"),query("item_composition_association","id,owner_id,composition_id,link_type,link_value,use_group_disjunction,group_disjunction_index")]);const sort=(a,b)=>(a.sort_priority||0)-(b.sort_priority||0)||a.name.localeCompare(b.name);state.items.sort(sort);state.categories.sort(sort);state.components.sort((a,b)=>a.name.localeCompare(b.name));renderStock();renderItems();renderCategories();renderComponents();renderOrders();populateCategoryControls()}
 
@@ -135,6 +165,7 @@
 
   async function loadAdmins(){try{const {data,error}=await db.rpc("list_admins");if(error)throw error;$("adminList").innerHTML=(data||[]).map(a=>`<article class="data-row"><div><strong>${escapeHtml(a.full_name||a.email||a.user_id)}</strong><br><small>${escapeHtml(a.email||a.user_id)}</small></div><span>${new Date(a.granted_at).toLocaleDateString("pt-BR")}</span><span></span><span></span>${a.user_id!==state.session?.user.id?`<button class="button" data-admin-remove="${a.user_id}">Remover</button>`:"<span>Você</span>"}</article>`).join("")}catch(error){$("adminList").innerHTML=`<p>${escapeHtml(error.message)}</p>`}}
   async function loadCustomers(){try{const {data,error}=await db.rpc("list_customer_profiles");if(error)throw error;$("customerList").innerHTML=(data||[]).map(c=>`<article class="data-row"><div><strong>${escapeHtml(c.known_as||c.full_name||c.email||c.user_id)}</strong><br><small>${escapeHtml(c.email||c.user_id)}${c.phone?` · ${escapeHtml(c.phone)}`:""}</small></div><span>${new Date(c.created_at).toLocaleDateString("pt-BR")}</span><span></span><span></span><button class="button danger-button" data-customer-remove="${escapeHtml(c.user_id)}">Apagar cadastro</button></article>`).join("")||"<p>Nenhum cadastro.</p>"}catch(error){$("customerList").innerHTML=`<p>${escapeHtml(error.message)}</p>`}}
+  function switchOrderTab(tab){if(![-1,0,1,2].includes(tab))return;state.orderTab=tab;localStorage.setItem("aldoAdminOrdersTab",String(tab));renderOrders();$("ordersBoard").scrollTop=0}
   function switchView(view){if(!viewNames.includes(view))view="home";state.view=view;localStorage.setItem("aldoAdminViewV2",view);if(location.hash!==`#${view}`)location.hash=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view+"View"));document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===view));$("viewTitle").textContent=titles[view];$("refresh").hidden=view==="home";$("appView").classList.toggle("orders-mode",view==="orders");$("appView").classList.toggle("home-mode",view==="home");if(orderRefreshTimer){clearInterval(orderRefreshTimer);orderRefreshTimer=null}if(view==="orders")orderRefreshTimer=setInterval(()=>{if(!document.hidden&&state.view==="orders")loadOrders().catch(error=>toast(error.message,true))},10000)}
   async function candidate(id,action){const fn=action==="confirm"?"confirm_whatsapp_candidate":"discard_whatsapp_candidate";const {error}=await db.rpc(fn,{candidate_id:id});if(error)toast(error.message,true);else{toast(action==="confirm"?"Pedido confirmado.":"Candidato descartado.");await Promise.all([loadCandidates(),loadOrders(),loadCatalog()])}}
   async function addAdmin(event){event.preventDefault();const {error}=await db.rpc("grant_admin_by_email",{target_email:$("adminEmail").value.trim()});if(error)toast(error.message,true);else{toast("Administrador adicionado.");event.target.reset();await loadAdmins()}}
@@ -147,6 +178,19 @@
   $("homeView").addEventListener("click",e=>{const tile=e.target.closest("[data-view]");if(tile)switchView(tile.dataset.view)});
   document.addEventListener("click",e=>{const home=e.target.closest(".home-return");if(home)switchView("home")});
   $("ordersRefresh").addEventListener("click",refreshAll);
+  $("ordersTabs").addEventListener("click",e=>{const tab=e.target.closest("[data-order-tab]");if(tab)switchOrderTab(Number(tab.dataset.orderTab))});
+  $("orderSettingsOpen").addEventListener("click",()=>$("orderSettingsDialog").showModal());
+  $("orderSettingsCancel").addEventListener("click",()=>$("orderSettingsDialog").close());
+  $("orderSettingsForm").addEventListener("submit",saveOrderSettings);
+  document.addEventListener("keydown",e=>{
+    if(state.view!=="orders"||$("orderExpandedDialog").open||$("orderSettingsDialog").open)return;
+    if(["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName))return;
+    if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+      e.preventDefault();const tabs=[-1,0,1,2],index=tabs.indexOf(state.orderTab);switchOrderTab(tabs[Math.max(0,Math.min(tabs.length-1,index+(e.key==="ArrowRight"?1:-1)))]);
+    }else if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      e.preventDefault();$("ordersBoard").scrollBy({top:Math.max(100,$("ordersBoard").clientHeight*.72)*(e.key==="ArrowDown"?1:-1),behavior:"smooth"});
+    }
+  });
   const handleOrderAction=e=>{const viewButton=e.target.closest("[data-order-view]");if(viewButton){openOrderDetails(viewButton.dataset.orderView);return}const button=e.target.closest("[data-order]");if(button&&!button.disabled)transitionOrder(button.dataset.order,button.dataset.status)};
   $("ordersBoard").addEventListener("click",handleOrderAction);
   $("deliveryOrders").addEventListener("click",handleOrderAction);
@@ -156,6 +200,6 @@
   $("stockList").addEventListener("click",e=>{const row=e.target.closest(".inventory-row");if(!row)return;const delta=e.target.closest("[data-stock-delta]");if(delta){const input=row.querySelector(".inventory-stock-input");input.value=String(Math.max(0,Math.trunc(Number(input.value)||0)+Number(delta.dataset.stockDelta)));row.querySelector(".inventory-hidden-input").checked=false;row.querySelector(".inventory-finished-input").checked=Number(input.value)===0;markInventoryChanged(row)}});
   $("saveInventory").addEventListener("click",saveInventoryChanges);
   $("googleLogin").addEventListener("click",login);$("logout").addEventListener("click",logout);$("deniedLogout").addEventListener("click",logout);$("refresh").addEventListener("click",refreshAll);$("nav").addEventListener("click",e=>e.target.closest("button")?.dataset.view&&switchView(e.target.closest("button").dataset.view));$("stockSearch").addEventListener("input",renderStock);$("stockKind").addEventListener("change",renderStock);$("stockAmount").addEventListener("input",updatePreview);$("stockOperation").addEventListener("change",updatePreview);$("stockForm").addEventListener("submit",saveStock);$("cancelStock").addEventListener("click",()=>$("stockDialog").close());$("itemSearch").addEventListener("input",renderItems);$("itemCategoryFilter").addEventListener("change",renderItems);$("componentSearch").addEventListener("input",renderComponents);$("newItem").addEventListener("click",()=>openItem());$("newCategory").addEventListener("click",()=>openCategory());$("newComponent").addEventListener("click",()=>openComponent());$("itemForm").addEventListener("submit",saveItem);$("categoryForm").addEventListener("submit",saveCategory);$("componentForm").addEventListener("submit",saveComponent);$("cancelItem").addEventListener("click",()=>$("itemDialog").close());$("cancelCategory").addEventListener("click",()=>$("categoryDialog").close());$("cancelComponent").addEventListener("click",()=>$("componentDialog").close());$("deleteItem").addEventListener("click",deleteItem);$("deleteCategory").addEventListener("click",deleteCategory);$("deleteComponent").addEventListener("click",deleteComponent);$("adminForm").addEventListener("submit",addAdmin);
-  document.addEventListener("click",e=>{const stock=e.target.closest("[data-stock-id]");if(stock)openStock(stock.dataset.stockKind,stock.dataset.stockId);const item=e.target.closest("[data-item-edit]");if(item)openItem(item.dataset.itemEdit);const addItem=e.target.closest("[data-category-add-item]");if(addItem)openItem("",addItem.dataset.categoryAddItem);const category=e.target.closest("[data-category-edit]");if(category)openCategory(category.dataset.categoryEdit);const child=e.target.closest("[data-category-add-child]");if(child)openCategory("",child.dataset.categoryAddChild);const component=e.target.closest("[data-component-edit]");if(component)openComponent(component.dataset.componentEdit);const confirmBtn=e.target.closest("[data-candidate-confirm]");if(confirmBtn)candidate(confirmBtn.dataset.candidateConfirm,"confirm");const discard=e.target.closest("[data-candidate-discard]");if(discard)candidate(discard.dataset.candidateDiscard,"discard");const remove=e.target.closest("[data-admin-remove]");if(remove)removeAdmin(remove.dataset.adminRemove);const customer=e.target.closest("[data-customer-remove]");if(customer)removeCustomerProfile(customer.dataset.customerRemove)});
+  document.addEventListener("click",e=>{const stock=e.target.closest("[data-stock-id]");if(stock)openStock(stock.dataset.stockKind,stock.dataset.stockId);const item=e.target.closest("[data-item-edit]");if(item)openItem(item.dataset.itemEdit);const addItem=e.target.closest("[data-category-add-item]");if(addItem)openItem("",addItem.dataset.categoryAddItem);const category=e.target.closest("[data-category-edit]");if(category)openCategory(category.dataset.categoryEdit);const child=e.target.closest("[data-category-add-child]");if(child)openCategory("",child.dataset.categoryAddChild);const component=e.target.closest("[data-component-edit]");if(component)openComponent(component.dataset.componentEdit);const candidateView=e.target.closest("[data-candidate-view]");if(candidateView)openOrderDetails(candidateView.dataset.candidateView);const confirmBtn=e.target.closest("[data-candidate-confirm]");if(confirmBtn)candidate(confirmBtn.dataset.candidateConfirm,"confirm");const discard=e.target.closest("[data-candidate-discard]");if(discard)candidate(discard.dataset.candidateDiscard,"discard");const remove=e.target.closest("[data-admin-remove]");if(remove)removeAdmin(remove.dataset.adminRemove);const customer=e.target.closest("[data-customer-remove]");if(customer)removeCustomerProfile(customer.dataset.customerRemove)});
   db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){state.session=null;show("login");return}if(event==="SIGNED_IN"&&session?.user?.id!==state.session?.user?.id)setTimeout(bootstrap,0)});bootstrap();
 })();
