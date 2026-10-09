@@ -8,7 +8,6 @@
   const savedView = viewNames.includes(routeView) ? routeView : localStorage.getItem("aldoAdminViewV2");
   const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map()};
   const titles = {home:"Administração",orders:"Pedidos",candidates:"Confirmações IA",stock:"Inventário",items:"Itens",categories:"Categorias",components:"Componentes",customers:"Cadastros",admins:"Administradores"};
-  const orderActions = [["confirmed","Confirmar pedido"],["production","Preparando"],["delivery","Saiu para entrega"]];
   let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
   const linkLabels = {delta:"Ajustável",scalable:"Escalável",complementary:"Complementar"};
@@ -47,8 +46,8 @@
         const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
         return `<div class="order-item">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}${components.length?` + ${components.join(" + ")}`:""}</strong></div></div>`;
       }).join("");
-      const canAdvance={confirmed:order.status==="received",production:order.status==="confirmed",delivery:order.status==="production"};
-      const actions=orderActions.map(([status,label])=>`<button class="button order-action" data-order="${escapeHtml(order.id)}" data-status="${status}" ${canAdvance[status]?"":"disabled"}>${label}</button>`).join("");
+      const canPrepare=["received","confirmed"].includes(order.status),canDeliver=order.status==="production";
+      const actions=`<button class="button order-action icon-action" data-order="${escapeHtml(order.id)}" data-status="preparing" aria-label="Preparando" title="Preparando" ${canPrepare?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.4 9H5.4L4 10Z"/><path d="M7 7c0-1 1-1 1-2m4 2c0-1 1-1 1-2m4 2c0-1 1-1 1-2M3 21h18"/></svg></button><button class="button order-action icon-action" data-order="${escapeHtml(order.id)}" data-status="delivery" aria-label="Saiu para entrega" title="Saiu para entrega" ${canDeliver?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M16 13h4"/></svg></button>`;
       return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
     }).join("");
     const customerName=order=>escapeHtml(order.customer_known_as||order.customer_name||"");
@@ -61,13 +60,14 @@
         categoryCounts.set(categoryName,(categoryCounts.get(categoryName)||0)+Number(item.quantity||0));
       });
       const counts=[...categoryCounts].map(([name,quantity])=>`${quantity} ${escapeHtml(name)}`).join(" · ");
-      return `<div class="compact-order-name"><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}</div>`;
+      const deliveredAction=list===deliveryOrders?`<button class="button delivery-done icon-action" data-order="${escapeHtml(order.id)}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:"";
+      return `<div class="compact-order-name ${deliveredAction?"has-action":""}"><div><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}</div>${deliveredAction}</div>`;
     }).join("");
     $("deliveryOrders").innerHTML=compact(deliveryOrders);
     $("deliveredOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivered").slice().reverse());
   }
 
-  async function transitionOrder(id,status){const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
+  async function transitionOrder(id,status){if(status==="preparing"){const order=state.orders.find(entry=>String(entry.id)===String(id));if(order?.status==="received"){const confirmation=await db.rpc("transition_order",{target_order:id,next_status:"confirmed"});if(confirmation.error){toast(confirmation.error.message,true);return}}status="production"}const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
 
   async function loadCandidates(){state.candidates=(await query("whatsapp_order_candidates")).filter(c=>c.status==="pending").sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderCandidates()}
   function renderCandidates(){const homeBadge=$("candidateHomeBadge");homeBadge.textContent=state.candidates.length;homeBadge.hidden=!state.candidates.length;$("candidateList").innerHTML=state.candidates.map(c=>`<article class="candidate-card"><h3>Conversa ${escapeHtml(c.conversation_key)}</h3><div class="meta"><span class="pill">Confiança ${c.confidence==null?"—":Math.round(c.confidence*100)+"%"}</span><span>${new Date(c.created_at).toLocaleString("pt-BR")}</span></div><pre>${escapeHtml(JSON.stringify(c.interpreted_order,null,2))}</pre><div class="actions"><button class="button primary" data-candidate-confirm="${c.id}">Confirmar</button><button class="button" data-candidate-discard="${c.id}">Descartar</button></div></article>`).join("")||"<p>Nenhum candidato aguardando confirmação.</p>"}
@@ -134,7 +134,9 @@
   $("homeView").addEventListener("click",e=>{const tile=e.target.closest("[data-view]");if(tile)switchView(tile.dataset.view)});
   document.addEventListener("click",e=>{const home=e.target.closest(".home-return");if(home)switchView("home")});
   $("ordersRefresh").addEventListener("click",refreshAll);
-  $("ordersBoard").addEventListener("click",e=>{const button=e.target.closest("[data-order]");if(button&&!button.disabled)transitionOrder(button.dataset.order,button.dataset.status)});
+  const handleOrderAction=e=>{const button=e.target.closest("[data-order]");if(button&&!button.disabled)transitionOrder(button.dataset.order,button.dataset.status)};
+  $("ordersBoard").addEventListener("click",handleOrderAction);
+  $("deliveryOrders").addEventListener("click",handleOrderAction);
   $("stockState").addEventListener("change",renderStock);
   $("stockList").addEventListener("change",e=>{const row=e.target.closest(".inventory-row");if(!row)return;const hidden=row.querySelector(".inventory-hidden-input"),finished=row.querySelector(".inventory-finished-input"),stock=row.querySelector(".inventory-stock-input");if(e.target===hidden&&hidden.checked)finished.checked=false;if(e.target===finished&&finished.checked)hidden.checked=false;if((e.target===hidden||e.target===finished)&&!hidden.checked&&!finished.checked&&Number(stock.value)===0)stock.value="1";markInventoryChanged(row)});
   $("stockList").addEventListener("click",e=>{const row=e.target.closest(".inventory-row");if(!row)return;const delta=e.target.closest("[data-stock-delta]");if(delta){const input=row.querySelector(".inventory-stock-input");input.value=String(Math.max(0,Math.trunc(Number(input.value)||0)+Number(delta.dataset.stockDelta)));row.querySelector(".inventory-hidden-input").checked=false;row.querySelector(".inventory-finished-input").checked=Number(input.value)===0;markInventoryChanged(row)}});
