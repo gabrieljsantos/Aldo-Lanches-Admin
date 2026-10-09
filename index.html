@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-16">
+  <link rel="stylesheet" href="styles.css?v=20261009-17">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -77,6 +77,11 @@
           </aside>
         </div>
       </section>
+
+      <dialog id="orderExpandedDialog" class="order-expanded-dialog">
+        <button type="button" class="order-expanded-close" aria-label="Fechar" title="Fechar">×</button>
+        <div id="orderExpandedContent" class="order-expanded-content"></div>
+      </dialog>
 
       <section id="candidatesView" class="view">
         <div class="section-copy"><h2>Pedidos interpretados do WhatsApp</h2><p>A IA apenas lê. Confira antes de transformar o rascunho em pedido.</p></div>
@@ -169,6 +174,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-16"></script>
+  <script src="app.js?v=20261009-17"></script>
 </body>
 </html>
