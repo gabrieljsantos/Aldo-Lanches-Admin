@@ -8,13 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-1">
+  <link rel="stylesheet" href="styles.css?v=20261009-2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="toast" class="toast" hidden></div>
 
-  <main id="loginView" class="login-shell">
+  <main id="loadingView" class="login-shell">
+    <section class="login-card loading-card"><span class="loading-spinner" aria-hidden="true"></span><h1>Carregando painel</h1><p>Verificando sua sessão...</p></section>
+  </main>
+
+  <main id="loginView" class="login-shell" hidden>
     <section class="login-card">
       <span class="eyebrow">Smart Store Hub</span>
       <h1>Central da Aldo Lanches</h1>
@@ -67,7 +71,7 @@
       </section>
 
       <section id="stockView" class="view">
-        <div class="section-copy"><h2>Inventário</h2><p>O mesmo controle operacional do cardápio: ocultar, finalizar e ajustar unidades.</p></div>
+        <div class="section-heading inventory-heading"><div class="section-copy"><h2>Inventário</h2><p>O mesmo controle operacional do cardápio: ocultar, finalizar e ajustar unidades.</p></div><button id="saveInventory" class="button primary" disabled>Salvar alterações <span id="inventoryChangeCount">(0)</span></button></div>
         <div class="inventory-metrics"><span id="stockTotal">Itens: 0</span><span id="stockVisible">Visíveis: 0</span><span id="stockFinished">Finalizados: 0</span><span id="stockHidden">Ocultos: 0</span></div>
         <div class="toolbar"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"><select id="stockKind"><option value="all">Itens e componentes</option><option value="item">Itens do cardápio</option><option value="composition">Componentes</option></select><select id="stockState"><option value="all">Todos os estados</option><option value="visible">Visíveis</option><option value="finished">Finalizados</option><option value="hidden">Ocultos</option></select></div>
         <div id="stockList" class="inventory-groups"></div>
@@ -147,6 +151,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-1"></script>
+  <script src="app.js?v=20261009-2"></script>
 </body>
 </html>
