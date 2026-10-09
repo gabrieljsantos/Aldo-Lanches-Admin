@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-7">
+  <link rel="stylesheet" href="styles.css?v=20261009-8">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -65,11 +65,10 @@
       <section id="ordersView" class="view">
         <div class="orders-layout">
           <section class="orders-primary-panel">
-            <header class="orders-panel-header"><span class="eyebrow">Aldo Lanches</span><h1>Pedidos recebidos</h1></header>
             <div class="orders-list" id="ordersBoard"></div>
           </section>
           <aside class="orders-side-panel">
-            <section class="orders-secondary-panel"><header class="orders-panel-header"><span class="eyebrow">Pedido</span><h2>Detalhes</h2></header><div id="orderDetail" class="order-detail"></div></section>
+            <section class="orders-secondary-panel"><div id="orderDetail" class="order-detail"></div></section>
             <div class="orders-controls"><button class="button home-return" data-view="home">← Início</button><button id="ordersRefresh" class="button">Atualizar</button></div>
           </aside>
         </div>
@@ -161,6 +160,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-7"></script>
+  <script src="app.js?v=20261009-8"></script>
 </body>
 </html>
