@@ -34,17 +34,36 @@
       const items=(order.order_items||[]).map(item=>{
         const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id));
         const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
-        const components=(item.order_item_components||[]).filter(component=>Number(component.quantity)>0).map(component=>`${escapeHtml(component.component_name)}${Number(component.quantity)>1?` ×${Number(component.quantity)}`:""}`).join(" · ");
+        const components=(item.order_item_components||[]).filter(component=>{
+          const perItem=Number(component.snapshot?.per_item_quantity??component.quantity);
+          const defaultPerItem=Number(component.snapshot?.default_quantity??component.free_quantity??0);
+          return perItem!==defaultPerItem;
+        }).map(component=>{
+          const perItem=Number(component.snapshot?.per_item_quantity??component.quantity);
+          const defaultPerItem=Number(component.snapshot?.default_quantity??component.free_quantity??0);
+          const delta=perItem-defaultPerItem;
+          return `${delta>0?"+":"−"}${Math.abs(delta)} ${escapeHtml(component.component_name)}`;
+        });
         const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
-        return `<div class="order-item">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}</strong>${components?`<small>${components.split(" · ").map(name=>`<span>　${name}</span>`).join("")}</small>`:""}</div></div>`;
+        return `<div class="order-item">${image}<div><strong>• ${Number(item.quantity)}x ${escapeHtml(item.item_name)}${components.length?` + ${components.join(" + ")}`:""}</strong></div></div>`;
       }).join("");
       const canAdvance={confirmed:order.status==="received",production:order.status==="confirmed",delivery:order.status==="production"};
       const actions=orderActions.map(([status,label])=>`<button class="button order-action" data-order="${escapeHtml(order.id)}" data-status="${status}" ${canAdvance[status]?"":"disabled"}>${label}</button>`).join("");
       return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
     }).join("");
     const customerName=order=>escapeHtml(order.customer_known_as||order.customer_name||"");
-    const compact=(list)=>list.map(order=>`<div class="compact-order-name">${customerName(order)}</div>`).join("");
-    $("deliveryOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivery"));
+    const deliveryOrders=state.orders.filter(order=>order.status==="delivery");
+    const compact=(list)=>list.map(order=>{
+      const categoryCounts=new Map();
+      (order.order_items||[]).forEach(item=>{
+        const category=state.categories.find(entry=>entry.id===state.items.find(catalogItem=>String(catalogItem.id)===String(item.catalog_item_id))?.category_id);
+        const categoryName=category?.name||"Sem categoria";
+        categoryCounts.set(categoryName,(categoryCounts.get(categoryName)||0)+Number(item.quantity||0));
+      });
+      const counts=[...categoryCounts].map(([name,quantity])=>`${quantity} ${escapeHtml(name)}`).join(" · ");
+      return `<div class="compact-order-name"><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}</div>`;
+    }).join("");
+    $("deliveryOrders").innerHTML=compact(deliveryOrders);
     $("deliveredOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivered").slice().reverse());
   }
 
