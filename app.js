@@ -73,10 +73,11 @@
       const address=order.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
       const items=(order.order_items||[]).map(item=>orderItemMarkup(item)).join("");
+      const generalNote=order.notes?`<p class="order-general-note"><strong>Obs. do pedido:</strong> ${escapeHtml(order.notes)}</p>`:"";
       const canPrepare=["received","confirmed"].includes(order.status),canDeliver=order.status==="production";
       const id=escapeHtml(order.id);
       const actions=tab===-1?`<button class="button order-action review-accept" data-order="${id}" data-status="received" aria-label="Aceitar pedido" title="Aceitar">✓</button><button class="button order-action review-reject" data-order="${id}" data-status="cancelled" aria-label="Recusar pedido" title="Recusar">×</button>`:tab===1?`<button class="button delivery-done icon-action" data-order="${id}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:tab===2?"":`<button class="button order-action icon-action" data-order="${id}" data-status="preparing" aria-label="Preparando" title="Preparando" ${canPrepare?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.4 9H5.4L4 10Z"/><path d="M7 7c0-1 1-1 1-2m4 2c0-1 1-1 1-2m4 2c0-1 1-1 1-2M3 21h18"/></svg></button><button class="button order-action icon-action" data-order="${id}" data-status="delivery" aria-label="Saiu para entrega" title="Saiu para entrega" ${canDeliver?"":"disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M16 13h4"/></svg></button>`;
-      return `<article class="order-row"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<strong class="order-card-total">${money(order.total)}</strong><button class="button view-order-button" data-order-view="${id}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div></article>`;
+      return `<article class="order-row status-${escapeHtml(order.status)}"><div class="order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}<strong class="order-card-total">${money(order.total)}</strong><button class="button view-order-button" data-order-view="${id}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions">${actions}</div>${generalNote}</article>`;
     };
     const candidateCard=candidate=>{
       const detail=candidate.interpreted_order||{};
@@ -84,7 +85,8 @@
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
       const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>orderItemMarkup({...item,item_name:item.item_name||item.name,snapshot:item.snapshot||{options_text:item.options_text||item.modifications||""}})).join("");
       const total=Number.isFinite(Number(detail.total))?`<strong class="order-card-total">${money(detail.total)}</strong>`:"";
-      return `<article class="order-row candidate-order-row"><div class="order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}${total}<button class="button view-order-button" data-candidate-view="${escapeHtml(candidate.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions"><button class="button order-action review-accept" data-candidate-confirm="${escapeHtml(candidate.id)}" aria-label="Confirmar pedido" title="Confirmar">✓</button><button class="button order-action review-reject" data-candidate-discard="${escapeHtml(candidate.id)}" aria-label="Descartar pedido" title="Descartar">×</button></div></article>`;
+      const generalNote=detail.notes?`<p class="order-general-note"><strong>Obs. do pedido:</strong> ${escapeHtml(detail.notes)}</p>`:"";
+      return `<article class="order-row candidate-order-row status-pending_confirmation"><div class="order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}${total}<button class="button view-order-button" data-candidate-view="${escapeHtml(candidate.id)}">Ver pedido</button></div><div class="order-items">${items}</div><div class="order-actions"><button class="button order-action review-accept" data-candidate-confirm="${escapeHtml(candidate.id)}" aria-label="Confirmar pedido" title="Confirmar">✓</button><button class="button order-action review-reject" data-candidate-discard="${escapeHtml(candidate.id)}" aria-label="Descartar pedido" title="Descartar">×</button></div>${generalNote}</article>`;
     };
     const rows=state.orderTab===-1?[...pending.map(order=>({created_at:order.created_at,html:orderCard(order,-1)})),...pendingCandidates.map(candidate=>({created_at:candidate.created_at,html:candidateCard(candidate)}))].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(row=>row.html):state.orderTab===1?deliveryOrders.map(order=>orderCard(order,1)):state.orderTab===2?delivered.map(order=>orderCard(order,2)):active.map(order=>orderCard(order,0));
     $("ordersBoard").innerHTML=rows.join("");
@@ -98,7 +100,8 @@
       });
       const counts=[...categoryCounts].map(([name,quantity])=>`${quantity} ${escapeHtml(name)}`).join(" · ");
       const deliveredAction=list===deliveryOrders?`<button class="button delivery-done icon-action" data-order="${escapeHtml(order.id)}" data-status="delivered" aria-label="Marcar como entregue" title="Marcar como entregue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="m8 11 2 2 4-4"/></svg></button>`:"";
-      return `<div class="compact-order-name ${deliveredAction?"has-action":""}"><div><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}<small class="compact-order-total">${money(order.total)}</small></div>${deliveredAction}</div>`;
+      const compactState=list===deliveryOrders?"status-delivery":"status-delivered";
+      return `<div class="compact-order-name ${compactState} ${deliveredAction?"has-action":""}"><div><strong>${customerName(order)}</strong>${counts?`<small>${counts}</small>`:""}<small class="compact-order-total">${money(order.total)}</small></div>${deliveredAction}</div>`;
     }).join("");
     $("deliveryOrders").innerHTML=compact(deliveryOrders);
     $("deliveredOrders").innerHTML=compact(state.orders.filter(order=>order.status==="delivered").slice().reverse());
@@ -110,7 +113,7 @@
       const detail=candidate.interpreted_order||{},address=detail.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
       const items=(Array.isArray(detail.items)?detail.items:[]).map(item=>orderItemMarkup({...item,item_name:item.item_name||item.name,snapshot:item.snapshot||{options_text:item.options_text||item.modifications||""}},true)).join("");
-      const notes=detail.notes?`<p class="expanded-order-note">${escapeHtml(detail.notes)}</p>`:"";
+      const notes=detail.notes?`<p class="expanded-order-note"><strong>Obs. do pedido:</strong> ${escapeHtml(detail.notes)}</p>`:"";
       const total=Number.isFinite(Number(detail.total))?`<strong class="expanded-order-total">${money(detail.total)}</strong>`:"";
       $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(detail.customer_known_as||detail.customer_name||"Pedido WhatsApp")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}${total}`;
       $("orderExpandedDialog").showModal();return;
@@ -118,7 +121,7 @@
     const address=order.delivery_address||{};
     const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
     const items=(order.order_items||[]).map(item=>orderItemMarkup(item,true)).join("");
-    const notes=order.notes?`<p class="expanded-order-note">${escapeHtml(order.notes)}</p>`:"";
+    const notes=order.notes?`<p class="expanded-order-note"><strong>Obs. do pedido:</strong> ${escapeHtml(order.notes)}</p>`:"";
     $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}<strong class="expanded-order-total">${money(order.total)}</strong>`;
     $("orderExpandedDialog").showModal();
   }
