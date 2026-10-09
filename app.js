@@ -7,7 +7,7 @@
   const routeView = location.hash.slice(1);
   const savedView = viewNames.includes(routeView) ? routeView : localStorage.getItem("aldoAdminViewV2");
   const savedOrderTab=Number(localStorage.getItem("aldoAdminOrdersTab")||0);
-  const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map(),orderTab:[-1,0,1,2].includes(savedOrderTab)?savedOrderTab:0,autoAcceptSiteOrders:true};
+  const state = {session:null,isAdmin:false,items:[],categories:[],components:[],associations:[],orders:[],orderLoadRevision:0,candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map(),orderTab:[-1,0,1,2].includes(savedOrderTab)?savedOrderTab:0,autoAcceptSiteOrders:true};
   const titles = {home:"Administração",orders:"Pedidos",candidates:"Confirmações IA",stock:"Inventário",items:"Itens",categories:"Categorias",components:"Componentes",customers:"Cadastros",admins:"Administradores"};
   let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
@@ -28,7 +28,7 @@
   async function loadOrderSettings(){try{const {data,error}=await db.rpc("get_order_auto_accept");if(error)throw error;state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders}catch(error){toast(`Configuração de pedidos indisponível: ${error.message}`,true)}}
   async function saveOrderSettings(event){event.preventDefault();const enabled=$("autoAcceptSiteOrders").checked;const {data,error}=await db.rpc("set_order_auto_accept",{p_enabled:enabled});if(error){toast(error.message,true);return}state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders;$("orderSettingsDialog").close();toast("Configuração salva.")}
 
-  async function loadOrders(){state.orders=await query("orders","*,order_items(*,order_item_components(*))");state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
+  async function loadOrders(){const revision=++state.orderLoadRevision;const orders=await query("orders","*,order_items(*,order_item_components(*))");if(revision!==state.orderLoadRevision)return;state.orders=orders;state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
   function orderItemMarkup(item,expanded=false){
     const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id));
     const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
@@ -110,7 +110,7 @@
     $("orderExpandedDialog").showModal();
   }
 
-  async function transitionOrder(id,status){if(status==="cancelled"&&!confirm("Recusar este pedido?"))return;if(status==="preparing"){const order=state.orders.find(entry=>String(entry.id)===String(id));if(order?.status==="received"){const confirmation=await db.rpc("transition_order",{target_order:id,next_status:"confirmed"});if(confirmation.error){toast(confirmation.error.message,true);return}}status="production"}const {error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}await loadOrders()}
+  async function transitionOrder(id,status){if(status==="cancelled"&&!confirm("Recusar este pedido?"))return;if(status==="preparing"){const order=state.orders.find(entry=>String(entry.id)===String(id));if(order?.status==="received"){const confirmation=await db.rpc("transition_order",{target_order:id,next_status:"confirmed"});if(confirmation.error){toast(confirmation.error.message,true);return}}status="production"}const {data,error}=await db.rpc("transition_order",{target_order:id,next_status:status});if(error){toast(error.message,true);return}const updated=Array.isArray(data)?data[0]:data;state.orders=state.orders.map(order=>String(order.id)===String(id)?{...order,...(updated||{}),status:updated?.status||status}:order);renderOrders();await loadOrders()}
 
   async function loadCandidates(){state.candidates=(await query("whatsapp_order_candidates")).filter(c=>c.status==="pending").sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderCandidates()}
   function renderCandidates(){const homeBadge=$("candidateHomeBadge");homeBadge.textContent=state.candidates.length;homeBadge.hidden=!state.candidates.length;$("candidateList").innerHTML=state.candidates.map(c=>`<article class="candidate-card"><h3>Conversa ${escapeHtml(c.conversation_key)}</h3><div class="meta"><span class="pill">Confiança ${c.confidence==null?"—":Math.round(c.confidence*100)+"%"}</span><span>${new Date(c.created_at).toLocaleString("pt-BR")}</span></div><pre>${escapeHtml(JSON.stringify(c.interpreted_order,null,2))}</pre><div class="actions"><button class="button primary" data-candidate-confirm="${c.id}">Confirmar</button><button class="button" data-candidate-discard="${c.id}">Descartar</button></div></article>`).join("")||"<p>Nenhum candidato aguardando confirmação.</p>";renderOrders()}
