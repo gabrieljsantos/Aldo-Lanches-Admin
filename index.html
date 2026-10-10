@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261009-24">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-sticky-scroll">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261010-item-composition-list">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261010-composed-item-pricing">
   <link rel="stylesheet" href="inventory.css?v=20261010-01">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -168,7 +168,7 @@
 
   <dialog id="itemPhotosDialog" class="wide-dialog"><form id="itemPhotosForm" class="dialog-card wide-card"><input id="photoItemId" type="hidden"><h2 id="itemPhotosTitle">Fotos</h2><label>Imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>URL principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>Imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>URL 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>Imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>URL 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><div class="dialog-actions"><button id="cancelItemPhotos" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button class="button primary">Salvar fotos</button></div></form></dialog>
 
-  <dialog id="itemCompositionDialog" class="wide-dialog"><div class="dialog-card wide-card"><input id="compositionItemId" type="hidden"><h2 id="compositionItemTitle">Composição</h2><div class="association-toolbar"><select id="compositionPackageSelect"><option value="">Selecionar grupo</option></select><button id="addCompositionPackage" type="button" class="button primary">Associar grupo</button></div><div id="itemPackageList" class="item-package-list"></div><div class="dialog-actions"><span class="dialog-spacer"></span><button id="closeItemComposition" type="button" class="button">Fechar</button></div></div></dialog>
+  <dialog id="itemCompositionDialog" class="wide-dialog"><div class="dialog-card wide-card"><input id="compositionItemId" type="hidden"><h2 id="compositionItemTitle">Composição</h2><div id="itemPackageList" class="item-package-list"></div><div class="dialog-actions"><span class="dialog-spacer"></span><button id="closeItemComposition" type="button" class="button">Fechar</button></div></div></dialog>
 
   <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button class="button primary">Salvar associação</button></div></form></dialog>
 
@@ -217,6 +217,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-item-composition-list"></script>
+  <script src="app.js?v=20261010-composed-item-pricing"></script>
 </body>
 </html>

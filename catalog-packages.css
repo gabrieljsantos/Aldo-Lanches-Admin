@@ -44,16 +44,27 @@
 .item-package-order input{width:54px;padding:5px;border:1px solid var(--line);border-radius:7px}
 .item-package-choice{margin-left:calc(var(--group-depth)*12px)}
 .menu-item-card>.item-card-actions{position:absolute;right:10px;bottom:10px;display:flex;gap:6px;align-items:center;margin:0}
+.menu-item-card.composed-item-card{border-color:#f2b27e;background:#fff8f1}
+.menu-item-card.composed-item-card:hover{border-color:#ee8a3b;background:#fff2e5}
+.menu-item-card.composed-item-card .item-placeholder{background:#ffead7;color:#c65312}
+.menu-item-price{display:grid;justify-items:end;align-content:start;gap:2px;text-align:right;white-space:nowrap}
+.menu-item-price>small{color:var(--muted);font-size:.65rem;font-weight:500;white-space:normal}
+.menu-item-copy>.meta{min-height:20px;align-items:center}
+.menu-item-copy>.item-status-meta{position:absolute;left:134px;bottom:13px}
+.menu-item-card.composed-item-card .item-status-meta{bottom:40px}
+.menu-item-card:not(.composed-item-card) .item-status-meta{bottom:13px}
+.menu-item-card.composed-item-card .item-card-actions{max-width:calc(100% - 134px);flex-wrap:wrap;justify-content:flex-end}
 .item-card-actions .button{position:static;min-height:36px;padding:.45rem .7rem}
 .item-card-actions .photo-manage-button{width:38px;padding:.35rem;font-size:1.2rem}
-.association-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:12px 0}
-.association-toolbar select,.association-summary input{min-width:0;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.association-summary input{min-width:0;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff}
 .item-package-list{display:grid;gap:8px;max-height:55vh;overflow:auto}
 .item-package-link-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
-.item-package-link-row>div:first-child{min-width:0}
-.item-package-link-row strong,.item-package-link-row small{display:block}
-.item-package-link-row small{margin-top:4px;color:var(--muted)}
-.item-package-link-row .actions{margin:0}
+.item-package-link-row.is-associated{border-color:#f2b27e;background:#fff8f1}
+.item-package-check{display:flex!important;align-items:center;gap:12px;min-width:0;margin:0!important;color:var(--text)!important;cursor:pointer}
+.item-package-check>input{width:19px!important;height:19px;flex:0 0 auto;accent-color:var(--primary)}
+.item-package-check>span{display:grid;gap:4px;min-width:0}
+.item-package-check strong,.item-package-check small{display:block}
+.item-package-check small{color:var(--muted);font-size:.8rem}
 .association-summary{display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:12px;border-radius:10px;background:var(--soft)}
 .association-summary>span{font-weight:700}
 .association-summary label{display:grid;gap:4px;min-width:150px;margin:0;color:var(--muted);font-size:.8rem}
@@ -63,7 +74,8 @@
 .item-group-config-row>label:not(.check-row){display:grid;gap:4px;color:var(--muted);font-size:.76rem}
 .item-group-config-row input[type=number]{width:100%;min-width:0;padding:7px;border:1px solid var(--line);border-radius:8px}
 .item-group-config-row .check-row{font-size:.78rem;white-space:nowrap}
-@media(max-width:800px){.association-toolbar{grid-template-columns:1fr}.item-package-link-row{align-items:flex-start;flex-direction:column}.item-group-config-row{grid-template-columns:repeat(2,minmax(0,1fr))}.item-group-config-row>strong{grid-column:1/-1}}
+@media(max-width:800px){.item-package-link-row{align-items:flex-start}.item-package-link-row>.button{flex:0 0 auto}.item-package-check small{line-height:1.4}.item-group-config-row{grid-template-columns:repeat(2,minmax(0,1fr))}.item-group-config-row>strong{grid-column:1/-1}}
+@media(max-width:520px){.menu-item-card.composed-item-card .item-card-actions{max-width:calc(100% - 94px);gap:4px}.menu-item-card.composed-item-card .item-card-actions .button{min-height:32px;padding:.35rem .5rem;font-size:.78rem}.menu-item-copy>.item-status-meta{left:104px}.menu-item-card.composed-item-card .item-status-meta{bottom:44px}}
 .component-presentations-list{display:grid;gap:10px;max-height:66vh;overflow:auto}
 .component-presentation-edit-row{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(150px,1fr) minmax(180px,1.4fr) minmax(170px,1.2fr) auto;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .component-presentation-edit-row>label{display:grid;gap:5px;color:var(--muted);font-size:.76rem}
