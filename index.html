@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-23">
-  <link rel="stylesheet" href="orders-enhancements.css?v=20261009-23">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261009-23">
+  <link rel="stylesheet" href="styles.css?v=20261009-24">
+  <link rel="stylesheet" href="orders-enhancements.css?v=20261009-24">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261010-01">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -50,7 +50,7 @@
         <header class="app-header">
           <div class="brand header-brand"><img src="https://raw.githubusercontent.com/gabrieljsantos/Cardapio_Aldo_Lanches/main/assets/Aldo%20Lanches%20logo.jpg" alt="Logo Aldo Lanches"><span><strong>Aldo Lanches</strong><small>Administração</small></span></div>
           <div class="header-account"><span id="sessionEmail"></span><button id="logout" class="link-button">Sair</button></div>
-          <details class="view-menu"><summary aria-label="Abrir navegação">☰</summary><nav id="nav" class="nav"><button data-view="orders">Pedidos</button><button data-view="candidates">Confirmações IA</button><button data-view="stock">Inventário</button><button data-view="items">Itens</button><button data-view="categories">Categorias</button><button data-view="components">Componentes</button><button data-view="packages">Pacotes</button><button data-view="customers">Cadastros</button><button data-view="admins">Administradores</button></nav></details>
+          <details class="view-menu"><summary aria-label="Abrir navegação">☰</summary><nav id="nav" class="nav"><button data-view="orders">Pedidos</button><button data-view="candidates">Confirmações IA</button><button data-view="stock">Inventário</button><button data-view="items">Itens</button><button data-view="categories">Categorias</button><button data-view="components">Componentes</button><button data-view="customers">Cadastros</button><button data-view="admins">Administradores</button></nav></details>
         </header>
         <div class="home-intro"><span class="eyebrow">Aldo Lanches</span><h1 id="viewTitle">Administração</h1></div>
         <div class="home-grid">
@@ -59,7 +59,6 @@
           <button class="home-tile" data-view="items"><span class="home-icon">☷</span><strong>Itens</strong><small>Produtos do cardápio</small></button>
           <button class="home-tile" data-view="categories"><span class="home-icon">▧</span><strong>Categorias</strong><small>Organização do cardápio</small></button>
           <button class="home-tile" data-view="components"><span class="home-icon">◈</span><strong>Componentes</strong><small>Ingredientes e complementos</small></button>
-          <button class="home-tile" data-view="packages"><span class="home-icon">▤</span><strong>Pacotes</strong><small>Grupos reutilizáveis</small></button>
           <button class="home-tile" data-view="candidates"><span class="home-icon">☏</span><strong>Confirmações IA <span id="candidateHomeBadge" class="badge" hidden>0</span></strong><small>Pedidos identificados no WhatsApp</small></button>
           <button class="home-tile" data-view="customers"><span class="home-icon">♧</span><strong>Cadastros</strong><small>Contas de clientes</small></button>
           <button class="home-tile" data-view="admins"><span class="home-icon">♙</span><strong>Administradores</strong><small>Acessos ao painel</small></button>
@@ -125,15 +124,9 @@
       </section>
 
       <section id="componentsView" class="view">
-        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2><p>Ingredientes e opções reutilizados nas composições dos itens.</p></div><button id="newComponent" class="button primary">Novo componente</button></div>
+        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2></div><div class="actions"><button id="newComponent" class="button">Novo componente</button><button id="newPackage" class="button primary">Novo grupo</button></div></div>
         <div class="toolbar"><input id="componentSearch" type="search" placeholder="Buscar componente"></div>
-        <div id="componentList" class="table-list"></div>
-      </section>
-
-      <section id="packagesView" class="view">
-        <div class="section-heading"><div class="section-copy"><h2>Pacotes</h2></div><button id="newPackage" class="button primary">Novo pacote</button></div>
-        <div class="toolbar"><input id="packageSearch" type="search" placeholder="Buscar pacote"></div>
-        <div id="packageList" class="table-list"></div>
+        <div id="componentList" class="component-group-tree"></div>
       </section>
 
       <section id="adminsView" class="view">
@@ -170,8 +163,7 @@
       <div class="form-grid"><label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label><label id="itemStockLabel">Quantidade atual<input id="itemStock" type="number" min="0" step="1" required></label></div>
       <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
       <fieldset><legend>Imagens do item</legend><label>Enviar imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>Enviar imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>Enviar imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>Ou usar URL da imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>URL da imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>URL da imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><p class="fine-print">As imagens enviadas ficam vinculadas ao item no bucket do catálogo.</p></fieldset>
-      <fieldset id="itemCompositionField"><legend>Composição do item</legend><p class="fine-print">Associe componentes e defina como o cliente interage com cada um.</p><div id="itemCompositionList" class="association-list"></div></fieldset>
-      <fieldset><legend>Pacotes reutilizáveis</legend><div id="itemPackageList" class="item-package-list"></div></fieldset>
+      <fieldset><legend>Grupos de componentes</legend><div id="itemPackageList" class="item-package-list"></div></fieldset>
       <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
     </form>
   </dialog>
@@ -201,7 +193,9 @@
   <dialog id="packageDialog" class="wide-dialog">
     <form id="packageForm" class="dialog-card wide-card">
       <input id="packageId" type="hidden"><h2 id="packageDialogTitle">Pacote</h2>
-      <div class="form-grid"><label>Nome<input id="packageName" required maxlength="100" placeholder="Molhos, Coberturas, Caldas..."></label><label>Tipo<select id="packageKind"><option value="adjustable">Ajustável</option><option value="scalable">Escalável</option><option value="complementary">Complementar</option><option value="single_required">Escolha obrigatória</option></select></label></div>
+      <div class="form-grid"><label>Nome<input id="packageName" required maxlength="100" placeholder="Molhos, Coberturas, Caldas..."></label><label>Tipo de seleção<select id="packageKind"><option value="adjustable">Ajustável</option><option value="scalable">Escalável</option><option value="complementary">Complementar</option><option value="single_required">Escolha obrigatória</option></select></label></div>
+      <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
+      <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
       <div class="form-grid"><label>Seleções mínimas<input id="packageMin" type="number" min="0" step="1" value="0"></label><label>Seleções máximas<input id="packageMax" type="number" min="0" step="1" placeholder="Sem limite"></label></div>
       <label class="check-row"><input id="packageActive" type="checkbox" checked> Ativo</label>
       <fieldset><legend>Componentes do pacote</legend><div id="packageComponentList" class="package-component-list"></div></fieldset>
@@ -210,6 +204,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261009-23"></script>
+  <script src="app.js?v=20261010-01"></script>
 </body>
 </html>
