@@ -47,6 +47,8 @@
 .menu-item-card.composed-item-card{border-color:#f2b27e;background:#fff8f1}
 .menu-item-card.composed-item-card:hover{border-color:#ee8a3b;background:#fff2e5}
 .menu-item-card.composed-item-card .item-placeholder{background:#ffead7;color:#c65312}
+.menu-item-card.is-clone-source{cursor:pointer;border:2px dashed #ef6c13;box-shadow:0 0 0 3px #ffead7}
+.menu-item-card.is-clone-source:hover{border-color:#c65312;background:#fff2e5}
 .menu-item-price{display:grid;justify-items:end;align-content:start;gap:2px;text-align:right;white-space:nowrap}
 .menu-item-price>small{color:var(--muted);font-size:.65rem;font-weight:500;white-space:normal}
 .menu-item-copy>.meta{min-height:20px;align-items:center}
