@@ -12,7 +12,7 @@
   let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
   const linkLabels = {delta:"Ajustável",scalable:"Escalável",complementary:"Complementar"};
-  const packageKindLabels={adjustable:"Ajustável",scalable:"Escalável",complementary:"Complementar",single_required:"Escolha obrigatória"};
+  const packageKindLabels={adjustable:"Delta · 0/1/2",scalable:"Escalável",decay:"Decaimento por prioridade",complementary:"Complementar (legado)",single_required:"Escolha única (legado)"};
   const packageAvailabilityLabels={all_positive_defaults_required:"Padrões positivos obrigatórios",one_available_with_priority_fallback:"Obrigatório com prioridade",optional_warn_only:"Opcional com aviso",optional:"Opcional"};
 
   function toast(message,error=false){const el=$("toast");el.textContent=message;el.style.borderColor=error?"var(--red)":"var(--green)";el.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.hidden=true,4200)}
@@ -30,7 +30,7 @@
   async function loadOrderSettings(){try{const {data,error}=await db.rpc("get_order_auto_accept");if(error)throw error;state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders}catch(error){toast(`Configuração de pedidos indisponível: ${error.message}`,true)}}
   async function saveOrderSettings(event){event.preventDefault();const enabled=$("autoAcceptSiteOrders").checked;const {data,error}=await db.rpc("set_order_auto_accept",{p_enabled:enabled});if(error){toast(error.message,true);return}state.autoAcceptSiteOrders=data!==false;$("autoAcceptSiteOrders").checked=state.autoAcceptSiteOrders;$("orderSettingsDialog").close();toast("Configuração salva.")}
 
-  async function loadOrders(){const revision=++state.orderLoadRevision;const orders=await query("orders","*,order_items(*,order_item_components(*))");if(revision!==state.orderLoadRevision)return;state.orders=orders;state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
+  async function loadOrders(){const revision=++state.orderLoadRevision;let orders;try{orders=await query("orders","*,order_items(*,order_item_components(*)),order_sellable_component_totals(*)")}catch(error){if(!/order_sellable_component_totals|relationship|schema cache/i.test(error.message||""))throw error;orders=await query("orders","*,order_items(*,order_item_components(*))")}if(revision!==state.orderLoadRevision)return;state.orders=orders;state.orders.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));renderOrders()}
   function orderItemMarkup(item,expanded=false){
     const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id||item.item_id))||state.items.find(entry=>entry.name?.trim().toLocaleLowerCase()===String(item.item_name||item.name||"").trim().toLocaleLowerCase());
     const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
@@ -60,6 +60,7 @@
     const quantityBadge=quantity>1?`<span class="item-quantity-badge" data-quantity="${Math.min(quantity,8)}">${quantity}</span>`:"";
     return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div class="order-item-copy"><div class="order-item-title">${quantityBadge}<strong>${escapeHtml(item.item_name||item.name||"Item")}</strong></div>${changes.length?`<div class="order-item-changes">${changes.join("")}</div>`:""}${note}</div></div>`;
   }
+  function sellableTotalsMarkup(order){return (order.order_sellable_component_totals||[]).filter(row=>Number(row.quantity)>0).map(row=>`<div class="order-item pooled-order-component"><span class="order-item-photo" aria-hidden="true"></span><div class="order-item-copy"><strong>${escapeHtml(row.customer_name||row.group_name)} · ${escapeHtml(row.component_name)} ×${Number(row.quantity)}</strong>${Number(row.charged_quantity)>0?`<small>${Number(row.charged_quantity)} adicional(is) · ${money(Number(row.charged_quantity)*Number(row.unit_price))}</small>`:""}</div></div>`).join("")}
   function renderOrders(){
     const pending=state.orders.filter(order=>order.status==="pending_confirmation");
     const pendingCandidates=state.candidates;
@@ -74,7 +75,7 @@
     const orderCard=(order,tab)=>{
       const address=order.delivery_address||{};
       const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
-      const items=(order.order_items||[]).map(item=>orderItemMarkup(item)).join("");
+      const items=(order.order_items||[]).map(item=>orderItemMarkup(item)).join("")+sellableTotalsMarkup(order);
       const generalNote=order.notes?`<p class="order-general-note"><strong>Obs. do pedido:</strong> ${escapeHtml(order.notes)}</p>`:"";
       const canPrepare=["received","confirmed"].includes(order.status),canDeliver=order.status==="production";
       const id=escapeHtml(order.id);
@@ -122,7 +123,7 @@
     }
     const address=order.delivery_address||{};
     const location=[address.street,address.landmark,address.address_extra].filter(Boolean).map(escapeHtml).join(" · ");
-    const items=(order.order_items||[]).map(item=>orderItemMarkup(item,true)).join("");
+    const items=(order.order_items||[]).map(item=>orderItemMarkup(item,true)).join("")+sellableTotalsMarkup(order);
     const notes=order.notes?`<p class="expanded-order-note"><strong>Obs. do pedido:</strong> ${escapeHtml(order.notes)}</p>`:"";
     $("orderExpandedContent").innerHTML=`<div class="expanded-order-customer"><strong>${escapeHtml(order.customer_known_as||order.customer_name||"")}</strong>${location?`<small>${location}</small>`:""}</div><div class="expanded-order-items">${items}</div>${notes}<strong class="expanded-order-total">${money(order.total)}</strong>`;
     $("orderExpandedDialog").showModal();
@@ -134,26 +135,28 @@
   function renderCandidates(){const homeBadge=$("candidateHomeBadge");homeBadge.textContent=state.candidates.length;homeBadge.hidden=!state.candidates.length;$("candidateList").innerHTML=state.candidates.map(c=>`<article class="candidate-card"><h3>Conversa ${escapeHtml(c.conversation_key)}</h3><div class="meta"><span class="pill">Confiança ${c.confidence==null?"—":Math.round(c.confidence*100)+"%"}</span><span>${new Date(c.created_at).toLocaleString("pt-BR")}</span></div><pre>${escapeHtml(JSON.stringify(c.interpreted_order,null,2))}</pre><div class="actions"><button class="button primary" data-candidate-confirm="${c.id}">Confirmar</button><button class="button" data-candidate-discard="${c.id}">Descartar</button></div></article>`).join("")||"<p>Nenhum candidato aguardando confirmação.</p>";renderOrders()}
 
   async function loadCatalog(){
-    const [items,categories,components,associations,packageComponents,itemPackages,itemComponentConfigs]=await Promise.all([
+    const [items,categories,components,associations,packageComponents,itemComponentConfigs]=await Promise.all([
       query("items","id,name,description,price,stock,category_id,photo_url_1,photo_url_2,photo_url_3,sort_priority,stock_mode,is_active"),
       query("node_category","id,name,parent_id,display_mode,sort_priority"),
       query("composition","id,name,stock,price,is_active,max_quantity,tracks_stock"),
       query("item_composition_association","id,owner_id,composition_id,link_type,link_value,use_group_disjunction,group_disjunction_index"),
       query("package_component","package_id,composition_id,sort_priority"),
-      query("item_package","item_id,package_id,cart_pooling,sort_priority"),
       query("item_component_config","item_id,package_id,composition_id,default_quantity,free_allowance,max_quantity,consumption_per_unit,is_enabled")
     ]);
-    try{state.packages=await query("ingredient_package","id,name,kind,availability_rule,min_selections,max_selections,is_active,parent_id,sort_priority")}
+    try{state.itemPackages=await query("item_package","item_id,package_id,cart_pooling,sort_priority,shared_free_allowance")}
+    catch(error){if(!/shared_free_allowance|column/i.test(error.message||""))throw error;state.itemPackages=(await query("item_package","item_id,package_id,cart_pooling,sort_priority")).map(row=>({...row,shared_free_allowance:0}));toast("Aplique a migration 20261010_10_component_group_modes_and_pooling.sql para configurar franquia compartilhada.",true)}
+    try{state.packages=await query("ingredient_package","id,name,customer_name,kind,availability_rule,min_selections,max_selections,is_active,parent_id,sort_priority,franchise_mode,is_sellable,sellable_category_id")}
     catch(error){
-      if(!/availability_rule|parent_id|sort_priority|column/i.test(error.message||""))throw error;
-      try{state.packages=(await query("ingredient_package","id,name,kind,availability_rule,min_selections,max_selections,is_active")).map((pack,index)=>({...pack,parent_id:null,sort_priority:index}))}
+      if(!/customer_name|availability_rule|parent_id|sort_priority|column/i.test(error.message||""))throw error;
+      try{state.packages=(await query("ingredient_package","id,name,customer_name,kind,availability_rule,min_selections,max_selections,is_active,parent_id,sort_priority")).map((pack,index)=>({...pack,parent_id:pack.parent_id??null,sort_priority:pack.sort_priority??index}))}
       catch(legacyError){
         if(!/availability_rule|column/i.test(legacyError.message||""))throw legacyError;
         state.packages=(await query("ingredient_package","id,name,kind,min_selections,max_selections,is_active")).map((pack,index)=>({...pack,availability_rule:"optional_warn_only",parent_id:null,sort_priority:index}));
       }
-      toast("Aplique a migração 08 de grupos para salvar hierarquia e prioridade.",true);
+      state.packages=state.packages.map(pack=>({...pack,customer_name:pack.customer_name||pack.name,franchise_mode:pack.franchise_mode||"none",is_sellable:pack.is_sellable===true,sellable_category_id:pack.sellable_category_id||null}));
+      toast("Aplique as migrations de nomes e modos dos grupos para editar todas as opções.",true);
     }
-    state.items=items;state.categories=categories;state.components=components;state.associations=associations;state.packageComponents=packageComponents;state.itemPackages=itemPackages;state.itemComponentConfigs=itemComponentConfigs;
+    state.items=items;state.categories=categories;state.components=components;state.associations=associations;state.packageComponents=packageComponents;state.itemComponentConfigs=itemComponentConfigs;
     const sort=(a,b)=>(a.sort_priority||0)-(b.sort_priority||0)||a.name.localeCompare(b.name);state.items.sort(sort);state.categories.sort(sort);state.components.sort((a,b)=>a.name.localeCompare(b.name));state.packages.sort(sort);renderStock();renderItems();renderCategories();renderComponents();renderOrders();populateCategoryControls()
   }
 
@@ -164,8 +167,9 @@
   function itemsOf(categoryId){return state.items.filter(i=>(i.category_id||null)===(categoryId||null))}
   function itemMatches(item){const term=$("itemSearch").value.trim().toLocaleLowerCase(),filter=$("itemCategoryFilter").value;return(!term||`${item.name} ${item.description||""}`.toLocaleLowerCase().includes(term))&&(filter==="all"||(item.category_id||"")===filter)}
   function itemCard(item){const image=item.photo_url_1?`<img src="${escapeHtml(item.photo_url_1)}" alt="">`:'<div class="item-placeholder">AL</div>';const groupCount=state.itemPackages.filter(link=>link.item_id===item.id).length;return `<article class="menu-item-card ${item.is_active===false?"inactive":""}">${image}<div class="menu-item-copy"><div class="menu-item-title"><strong>${escapeHtml(item.name)}</strong><strong>${money(item.price)}</strong></div><p>${escapeHtml(item.description||"Sem descrição")}</p><div class="meta"><span class="pill">${item.stock_mode==="composition"?"Por composição":"Estoque direto"}</span><span>${groupCount} grupo(s)</span><span>${item.is_active===false?"Oculto":"Ativo"}</span></div></div><button class="button" data-item-edit="${item.id}">Editar</button></article>`}
-  function categoryEditor(category,level=0){const items=itemsOf(category.id).filter(itemMatches),children=childrenOf(category.id);const visible=items.length||children.some(c=>hasVisibleCategory(c));if(!visible&&($("itemSearch").value||$("itemCategoryFilter").value!=="all"))return"";return `<section class="menu-category" style="--depth:${level}"><header><div><span class="eyebrow">${escapeHtml(displayLabels[category.display_mode]||category.display_mode)}</span><h3>${escapeHtml(category.name)}</h3></div><div class="actions"><button class="button" data-category-add-item="${category.id}">+ Item</button><button class="button" data-category-add-child="${category.id}">+ Subcategoria</button><button class="button" data-category-edit="${category.id}">Editar categoria</button></div></header><div class="menu-items">${items.map(itemCard).join("")||'<p class="fine-print">Nenhum item diretamente nesta categoria.</p>'}</div>${children.map(c=>categoryEditor(c,level+1)).join("")}</section>`}
-  function hasVisibleCategory(category){return itemsOf(category.id).some(itemMatches)||childrenOf(category.id).some(hasVisibleCategory)}
+  function categoryPackages(categoryId){return state.packages.filter(pack=>pack.is_sellable===true&&String(pack.sellable_category_id||"")===String(categoryId))}
+  function categoryEditor(category,level=0){const items=itemsOf(category.id).filter(itemMatches),packages=categoryPackages(category.id),children=childrenOf(category.id);const visible=items.length||packages.length||children.some(c=>hasVisibleCategory(c));if(!visible&&($("itemSearch").value||$("itemCategoryFilter").value!=="all"))return"";const packageCards=packages.map(pack=>`<article class="menu-item-card"><div class="menu-item-copy"><div class="menu-item-title"><strong>${escapeHtml(pack.customer_name||pack.name)}</strong><span class="pill">Vitrine de componentes</span></div><small>${state.packageComponents.filter(link=>link.package_id===pack.id).map(link=>state.components.find(component=>String(component.id)===String(link.composition_id))?.name).filter(Boolean).map(escapeHtml).join(" · ")}</small></div><button class="button" data-package-edit="${escapeHtml(pack.id)}">Editar grupo</button></article>`).join("");return `<section class="menu-category" style="--depth:${level}"><header><div><span class="eyebrow">${escapeHtml(displayLabels[category.display_mode]||category.display_mode)}</span><h3>${escapeHtml(category.name)}</h3></div><div class="actions"><button class="button" data-category-add-item="${category.id}">+ Item</button><button class="button" data-category-add-child="${category.id}">+ Subcategoria</button><button class="button" data-category-edit="${category.id}">Editar categoria</button></div></header><div class="menu-items">${items.map(itemCard).join("")}${packageCards}</div>${children.map(c=>categoryEditor(c,level+1)).join("")}</section>`}
+  function hasVisibleCategory(category){return itemsOf(category.id).some(itemMatches)||categoryPackages(category.id).length>0||childrenOf(category.id).some(hasVisibleCategory)}
   function renderItems(){const roots=childrenOf(null);const orphanItems=itemsOf(null).filter(itemMatches);$("itemList").innerHTML=(orphanItems.length?`<section class="menu-category"><header><h3>Sem categoria</h3></header><div class="menu-items">${orphanItems.map(itemCard).join("")}</div></section>`:"")+roots.map(c=>categoryEditor(c)).join("")||"<p>Nenhum item corresponde aos filtros.</p>"}
 
   function categoryTreeRows(parentId=null,level=0){return childrenOf(parentId).map(c=>`<article class="tree-row" style="--depth:${level}"><div><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.id)} · ${escapeHtml(displayLabels[c.display_mode]||c.display_mode)} · ${itemsOf(c.id).length} item(ns)</small></div><div class="actions"><button class="button" data-category-add-child="${c.id}">+ Subcategoria</button><button class="button" data-category-add-item="${c.id}">+ Item</button><button class="button" data-category-edit="${c.id}">Editar</button></div></article>${categoryTreeRows(c.id,level+1)}`).join("")}
@@ -178,7 +182,7 @@
       const members=state.packageComponents.filter(row=>row.package_id===pack.id).sort((a,b)=>(a.sort_priority||0)-(b.sort_priority||0)).map(row=>state.components.find(component=>String(component.id)===String(row.composition_id))).filter(Boolean);
       const children=packageTreeRows(pack.id,level+1,term),products=state.itemPackages.filter(row=>row.package_id===pack.id).length;
       const visibleMembers=members.filter(component=>!term||component.name.toLocaleLowerCase().includes(term)||pack.name.toLocaleLowerCase().includes(term));
-      return `<section class="component-group-node" style="--group-depth:${Math.min(level,5)}"><header class="component-group-heading"><div><span class="component-group-index">${Number(pack.sort_priority)||0}</span><strong>${escapeHtml(pack.name)}</strong><span class="pill">${escapeHtml(packageKindLabels[pack.kind]||pack.kind)}</span><span class="pill">${escapeHtml(packageAvailabilityLabels[pack.availability_rule]||"Regra não definida")}</span></div><div class="actions"><button class="button" data-package-add-child="${escapeHtml(pack.id)}">+ Grupo</button><button class="button" data-package-edit="${escapeHtml(pack.id)}">Editar grupo</button><button class="button danger-button" data-package-delete="${escapeHtml(pack.id)}">Excluir grupo</button></div></header><div class="component-group-meta"><span>${visibleMembers.length} componente(s)</span><span>${products} item(ns)</span>${pack.is_active===false?"<span>Desativado</span>":""}</div><div class="component-group-members">${visibleMembers.map(componentRow).join("")||"<small>Sem componentes</small>"}</div>${children}</section>`;
+      return `<section class="component-group-node" style="--group-depth:${Math.min(level,5)}"><header class="component-group-heading"><div><span class="component-group-index">${Number(pack.sort_priority)||0}</span><strong>${escapeHtml(pack.name)}</strong><span class="pill">${escapeHtml(packageKindLabels[pack.kind]||pack.kind)}</span><span class="pill">${escapeHtml(packageAvailabilityLabels[pack.availability_rule]||"Regra não definida")}</span></div><div class="actions"><button class="button" data-package-add-child="${escapeHtml(pack.id)}">+ Grupo</button><button class="button" data-package-edit="${escapeHtml(pack.id)}">Editar grupo</button><button class="button danger-button" data-package-delete="${escapeHtml(pack.id)}">Excluir grupo</button></div></header><div class="component-group-meta"><span>Público: ${escapeHtml(pack.customer_name||pack.name)}</span><span>${visibleMembers.length} componente(s)</span><span>${products} item(ns)</span><span>Franquia: ${escapeHtml(pack.franchise_mode||"none")}</span>${pack.is_sellable?`<span>Vitrine: ${escapeHtml(categoryPath(pack.sellable_category_id))}</span>`:""}${pack.is_active===false?"<span>Desativado</span>":""}</div><div class="component-group-members">${visibleMembers.map(componentRow).join("")||"<small>Sem componentes</small>"}</div>${children}</section>`;
     }).join("")
   }
   function renderComponents(){
@@ -191,10 +195,11 @@
     const links=state.itemPackages.filter(row=>row.item_id===itemId),attached=new Set(links.map(row=>row.package_id));
     const ordered=[],walk=(parentId=null,depth=0)=>state.packages.filter(pack=>(pack.parent_id||null)===(parentId||null)).forEach(pack=>{ordered.push({pack,depth});walk(pack.id,depth+1)});walk();
     return ordered.filter(({pack})=>pack.is_active!==false||attached.has(pack.id)).map(({pack,depth})=>{
+      const quantityLimit=pack.kind==="adjustable"?2:["complementary","single_required","decay"].includes(pack.kind)?1:null;
       const members=state.packageComponents.filter(row=>row.package_id===pack.id).sort((a,b)=>(a.sort_priority||0)-(b.sort_priority||0));
-      const configs=members.map(member=>{const component=state.components.find(c=>String(c.id)===String(member.composition_id));if(!component)return"";const config=state.itemComponentConfigs.find(c=>c.item_id===itemId&&c.package_id===pack.id&&String(c.composition_id)===String(component.id));return `<div class="item-package-component" data-item-package-component="${escapeHtml(component.id)}"><label class="check-row"><input type="checkbox" data-config-enabled ${config?.is_enabled===false?"":"checked"}>${escapeHtml(component.name)}</label><label>Padrão<input type="number" min="0" step="1" data-config-value="default_quantity" value="${config?.default_quantity??0}"></label><label>Grátis<input type="number" min="0" step="1" data-config-value="free_allowance" value="${config?.free_allowance??0}"></label><label>Limite<input type="number" min="0" step="1" data-config-value="max_quantity" value="${config?.max_quantity??component.max_quantity??4}"></label><label>Consumo<input type="number" min="0" step="1" data-config-value="consumption_per_unit" value="${config?.consumption_per_unit??1}"></label></div>`}).join("");
+      const configs=members.map(member=>{const component=state.components.find(c=>String(c.id)===String(member.composition_id));if(!component)return"";const config=state.itemComponentConfigs.find(c=>c.item_id===itemId&&c.package_id===pack.id&&String(c.composition_id)===String(component.id));const maxAllowed=quantityLimit??Number(component.max_quantity??4),configuredMax=Math.min(maxAllowed,Number(config?.max_quantity??component.max_quantity??4)),defaultQuantity=Math.min(configuredMax,Number(config?.default_quantity??0)),freeAllowance=Math.min(configuredMax,Number(config?.free_allowance??0));return `<div class="item-package-component" data-item-package-component="${escapeHtml(component.id)}"><label class="check-row"><input type="checkbox" data-config-enabled ${config?.is_enabled===false?"":"checked"}>${escapeHtml(component.name)}</label><label>Padrão<input type="number" min="0" ${Number.isFinite(maxAllowed)?`max="${maxAllowed}"`:""} step="1" data-config-value="default_quantity" value="${defaultQuantity}"></label><label>Grátis<input type="number" min="0" ${Number.isFinite(maxAllowed)?`max="${maxAllowed}"`:""} step="1" data-config-value="free_allowance" value="${freeAllowance}"></label><label>Limite<input type="number" min="0" ${Number.isFinite(maxAllowed)?`max="${maxAllowed}"`:""} step="1" data-config-value="max_quantity" value="${configuredMax}"></label><label>Consumo<input type="number" min="0" step="1" data-config-value="consumption_per_unit" value="${config?.consumption_per_unit??1}"></label></div>`}).join("");
       const existingLink=links.find(link=>String(link.package_id)===String(pack.id));
-      return `<details class="item-package-card item-package-choice" style="--group-depth:${Math.min(depth,5)}" data-item-package-card="${escapeHtml(pack.id)}"><summary><label class="check-row"><input type="checkbox" data-item-package ${attached.has(pack.id)?"checked":""}>${escapeHtml(packagePath(pack.id))}</label><span class="pill">${escapeHtml(packageAvailabilityLabels[pack.availability_rule]||"Regra não definida")}</span><label class="item-package-order">Ordem<input type="number" min="0" step="1" data-item-package-priority value="${existingLink?.sort_priority??pack.sort_priority??0}" aria-label="Ordem do grupo ${escapeHtml(pack.name)}"></label></summary><div class="item-package-components">${configs||"<small>Sem componentes.</small>"}</div></details>`
+      return `<details class="item-package-card item-package-choice" style="--group-depth:${Math.min(depth,5)}" data-item-package-card="${escapeHtml(pack.id)}"><summary><label class="check-row"><input type="checkbox" data-item-package ${attached.has(pack.id)?"checked":""}>${escapeHtml(packagePath(pack.id))}</label><span class="pill">${escapeHtml(packageKindLabels[pack.kind]||pack.kind)}</span><label class="item-package-order">Ordem<input type="number" min="0" step="1" data-item-package-priority value="${existingLink?.sort_priority??pack.sort_priority??0}" aria-label="Ordem do grupo ${escapeHtml(pack.name)}"></label></summary>${pack.is_sellable?`<label>Franquia compartilhada gratuita por unidade deste item<input type="number" min="0" step="1" data-shared-allowance value="${Math.max(0,Number(existingLink?.shared_free_allowance||0))}"></label>`:""}<div class="item-package-components">${configs||"<small>Sem componentes.</small>"}</div></details>`
     }).join("")||"<p>Crie um grupo primeiro.</p>";
   }
   function packageParentOptions(pack){
@@ -202,16 +207,25 @@
     return '<option value="">Raiz</option>'+state.packages.filter(entry=>entry.id!==pack?.id&&!descendants.has(entry.id)).map(entry=>`<option value="${escapeHtml(entry.id)}">${escapeHtml(packagePath(entry.id))}</option>`).join("");
   }
   function packagePath(id){const path=[],seen=new Set();let current=state.packages.find(entry=>String(entry.id)===String(id));while(current&&!seen.has(current.id)){seen.add(current.id);path.unshift(current.name);current=state.packages.find(entry=>String(entry.id)===String(current.parent_id))}return path.join(" › ")}
-  function openPackage(id="",parentId=""){const pack=state.packages.find(p=>p.id===id);$("packageForm").reset();$("packageId").value=pack?.id||"";$("packageDialogTitle").textContent=pack?`Editar ${pack.name}`:"Novo grupo";$("packageName").value=pack?.name||"";$("packageKind").value=pack?.kind||"complementary";$("packageAvailabilityRule").value=pack?.availability_rule||"optional_warn_only";$("packageMin").value=pack?.min_selections??0;$("packageRequiresSelection").checked=Number(pack?.min_selections||0)>0;$("packageMax").value=pack?.max_selections??"";$("packageParent").innerHTML=packageParentOptions(pack);$("packageParent").value=pack?.parent_id||parentId||"";$("packagePriority").value=pack?.sort_priority??0;$("packageActive").checked=pack?.is_active!==false;$("packageComponentList").innerHTML=packageComponentRows(pack?.id||"");$("deletePackage").hidden=!pack;$("packageDialog").showModal()}
+  function openPackage(id="",parentId=""){const pack=state.packages.find(p=>p.id===id);$("packageForm").reset();$("packageId").value=pack?.id||"";$("packageDialogTitle").textContent=pack?`Editar ${pack.name}`:"Novo grupo";$("packageName").value=pack?.name||"";$("packageCustomerName").value=pack?.customer_name||pack?.name||"";$("packageKind").value=pack?.kind||"adjustable";$("packageFranchiseMode").value=pack?.franchise_mode||"none";$("packageSellable").checked=pack?.is_sellable===true;$("packageCategory").innerHTML='<option value="">Escolher categoria</option>'+categoryOptions();$("packageCategory").value=pack?.sellable_category_id||"";$("packageAvailabilityRule").value=pack?.availability_rule||"optional_warn_only";$("packageMin").value=pack?.min_selections??0;$("packageRequiresSelection").checked=Number(pack?.min_selections||0)>0;$("packageMax").value=pack?.max_selections??"";$("packageParent").innerHTML=packageParentOptions(pack);$("packageParent").value=pack?.parent_id||parentId||"";$("packagePriority").value=pack?.sort_priority??0;$("packageActive").checked=pack?.is_active!==false;$("packageComponentList").innerHTML=packageComponentRows(pack?.id||"");$("deletePackage").hidden=!pack;$("packageDialog").showModal()}
   async function savePackage(event){
     event.preventDefault();
-    const id=$("packageId").value,name=$("packageName").value.trim(),minSelections=Math.trunc(Number($("packageMin").value)||0),maxRaw=$("packageMax").value.trim(),maxSelections=maxRaw===""?null:Math.trunc(Number(maxRaw));
+    const id=$("packageId").value,name=$("packageName").value.trim(),customerName=$("packageCustomerName").value.trim(),minSelections=Math.trunc(Number($("packageMin").value)||0),maxRaw=$("packageMax").value.trim(),maxSelections=maxRaw===""?null:Math.trunc(Number(maxRaw));
+    if(!name||!customerName){toast("Preencha o nome interno e o nome que aparece no cardápio.",true);return}
     if(maxSelections!==null&&maxSelections<minSelections){toast("O máximo deve ser igual ou maior que o mínimo.",true);return}
     const priority=Math.trunc(Number($("packagePriority").value));if(!Number.isInteger(priority)||priority<0){toast("A prioridade deve ser um número inteiro não negativo.",true);return}
-    const payload={name,kind:$("packageKind").value,availability_rule:$("packageAvailabilityRule").value,min_selections:minSelections,max_selections:maxSelections,is_active:$("packageActive").checked,parent_id:$("packageParent").value||null,sort_priority:priority};
+    const isSellable=$("packageSellable").checked,categoryId=$("packageCategory").value||null,franchiseMode=$("packageFranchiseMode").value;
+    if(isSellable&&$("packageKind").value!=="scalable"){toast("Somente grupos escaláveis podem ser vendidos como escolha própria.",true);return}
+    if(franchiseMode!=="none"&&$("packageKind").value!=="scalable"){toast("Franquia pode ser configurada apenas em grupos escaláveis.",true);return}
+    if(isSellable&&!categoryId){toast("Escolha a categoria da vitrine do grupo vendável.",true);return}
+    const packageComponentIds=[...$("packageComponentList").querySelectorAll("[data-package-component]:checked")].map(input=>input.dataset.packageComponent);
+    if($("packageKind").value==="decay"&&!packageComponentIds.length){toast("Decaimento precisa de ao menos uma opção ordenada no grupo.",true);return}
+    if(franchiseMode==="shared"&&packageComponentIds.length){const prices=packageComponentIds.map(id=>Number(state.components.find(component=>String(component.id)===String(id))?.price||0));if(prices.some(price=>price!==prices[0])){toast("Franquia compartilhada exige o mesmo preço em todos os componentes do grupo.",true);return}}
+    const kind=$("packageKind").value,isDecay=kind==="decay";
+    const payload={name,customer_name:customerName,kind,franchise_mode:franchiseMode,is_sellable:isSellable,sellable_category_id:isSellable?categoryId:null,availability_rule:isSellable?"optional_warn_only":isDecay?"one_available_with_priority_fallback":$("packageAvailabilityRule").value,min_selections:isSellable?0:isDecay?1:minSelections,max_selections:isSellable?null:isDecay?1:maxSelections,is_active:$("packageActive").checked,parent_id:$("packageParent").value||null,sort_priority:priority};
     let packageId=id;
-    if(id){const {error}=await db.from("ingredient_package").update(payload).eq("id",id);if(error){toast(error.message,true);return}}
-    else{const {data,error}=await db.from("ingredient_package").insert(payload).select("id").single();if(error){toast(error.message,true);return}packageId=data.id}
+    if(id){const {error}=await db.from("ingredient_package").update(payload).eq("id",id);if(error){toast(/customer_name|column|franchise_mode|is_sellable|sellable_category_id/i.test(error.message||"")?"Aplique as migrations 20261010_09_component_group_customer_name.sql e 20261010_10_component_group_modes_and_pooling.sql antes de salvar os grupos.":error.message,true);return}}
+    else{const {data,error}=await db.from("ingredient_package").insert(payload).select("id").single();if(error){toast(/customer_name|column|franchise_mode|is_sellable|sellable_category_id/i.test(error.message||"")?"Aplique as migrations 20261010_09_component_group_customer_name.sql e 20261010_10_component_group_modes_and_pooling.sql antes de salvar os grupos.":error.message,true);return}packageId=data.id}
     const rows=[...$("packageComponentList").querySelectorAll("[data-package-component]:checked")].map(input=>({
       package_id:packageId,composition_id:input.dataset.packageComponent,
       sort_priority:Math.max(0,Math.trunc(Number(input.closest(".package-component-row").querySelector("[data-package-priority]").value)||0))
@@ -261,16 +275,19 @@
     for(const card of $("itemPackageList").querySelectorAll("[data-item-package-card]")){
       const packageId=card.dataset.itemPackageCard;
       if(!card.querySelector("[data-item-package]").checked)continue;
+      const pack=state.packages.find(entry=>String(entry.id)===String(packageId));
+      const quantityLimit=pack?.kind==="adjustable"?2:["complementary","single_required","decay"].includes(pack?.kind)?1:null;
       const priorityInput=card.querySelector("[data-item-package-priority]"),priority=Math.trunc(Number(priorityInput?.value));
       if(!Number.isInteger(priority)||priority<0)throw new Error("A ordem dos grupos deve ser um número inteiro não negativo.");
-      linked.push({package_id:packageId,sort_priority:priority});
-      const pack=state.packages.find(entry=>String(entry.id)===String(packageId));
+      const sharedAllowance=Math.trunc(Number(card.querySelector("[data-shared-allowance]")?.value||0));
+      if(!Number.isInteger(sharedAllowance)||sharedAllowance<0)throw new Error("A franquia compartilhada deve ser um inteiro não negativo.");
+      linked.push({package_id:packageId,sort_priority:priority,shared_free_allowance:sharedAllowance});
       const packageConfigs=[];
       for(const row of card.querySelectorAll("[data-item-package-component]")){
         const compositionId=row.dataset.itemPackageComponent,values={};
         for(const input of row.querySelectorAll("[data-config-value]")){
           const key=input.dataset.configValue,value=Number(input.value);
-          if(!Number.isInteger(value)||value<0)throw new Error("As quantidades dos componentes devem ser números inteiros não negativos.");
+          if(!Number.isInteger(value)||value<0||(Number.isFinite(quantityLimit)&&value>quantityLimit))throw new Error(Number.isFinite(quantityLimit)?`Neste grupo, cada componente aceita de 0 a ${quantityLimit}.`:"As quantidades dos componentes devem ser números inteiros não negativos.");
           values[key]=value;
         }
         const max=values.max_quantity;
@@ -283,7 +300,7 @@
       if(pack?.availability_rule==="one_available_with_priority_fallback"&&(activeDefaults.length!==1||activeDefaults[0].default_quantity!==1)){
         throw new Error(`O grupo “${pack.name}” precisa ter exatamente uma opção padrão, na quantidade 1.`);
       }
-      if(pack?.kind==="single_required"&&(activeDefaults.length!==1||activeDefaults[0].default_quantity!==1)){
+      if(["single_required","decay"].includes(pack?.kind)&&(activeDefaults.length!==1||activeDefaults[0].default_quantity!==1)){
         throw new Error(`O grupo “${pack.name}” precisa ter exatamente uma escolha padrão.`);
       }
     }
@@ -298,7 +315,7 @@
       const unlink=await db.from("item_package").delete().eq("item_id",itemId).eq("package_id",row.package_id);
       if(unlink.error)throw unlink.error;
     }
-    if(linked.length){const {error}=await db.from("item_package").upsert(linked.map(link=>({item_id:itemId,package_id:link.package_id,cart_pooling:false,sort_priority:link.sort_priority})),{onConflict:"item_id,package_id"});if(error)throw error}
+    if(linked.length){const {error}=await db.from("item_package").upsert(linked.map(link=>({item_id:itemId,package_id:link.package_id,cart_pooling:false,sort_priority:link.sort_priority,shared_free_allowance:link.shared_free_allowance})),{onConflict:"item_id,package_id"});if(error)throw error}
     if(configs.length){
       const {error}=await db.from("item_component_config").upsert(configs.map(config=>({item_id:itemId,...config})),{onConflict:"item_id,package_id,composition_id"});
       if(error)throw error;

@@ -193,10 +193,13 @@
   <dialog id="packageDialog" class="wide-dialog">
     <form id="packageForm" class="dialog-card wide-card">
       <input id="packageId" type="hidden"><h2 id="packageDialogTitle">Pacote</h2>
-      <div class="form-grid"><label>Nome<input id="packageName" required maxlength="100" placeholder="Molhos, Coberturas, Caldas..."></label><label>Tipo de seleção<select id="packageKind"><option value="adjustable">Ajustável</option><option value="scalable">Escalável</option><option value="complementary">Complementar</option><option value="single_required">Escolha obrigatória</option></select></label></div>
+      <div class="form-grid"><label>Nome interno (só você)<input id="packageName" required maxlength="100" placeholder="Opções principais obrigatórias"></label><label>Nome no cardápio (cliente)<input id="packageCustomerName" required maxlength="100" placeholder="Recheios"></label></div>
+      <label>Modo do grupo<select id="packageKind"><option value="adjustable">Delta — 0, 1 ou 2; não bloqueia o item</option><option value="scalable">Escalável — quantidade conforme limite/estoque</option><option value="decay">Decaimento — uma opção obrigatória por prioridade</option><option value="complementary">Complementar (compatibilidade antiga) — 0 ou 1</option><option value="single_required">Escolha única (compatibilidade antiga)</option></select></label>
+      <div class="form-grid"><label>Franquia<select id="packageFranchiseMode"><option value="none">Sem franquia</option><option value="per_component">Individual por componente</option><option value="shared">Compartilhada pelo grupo</option></select></label><span>Na franquia compartilhada, os componentes do grupo devem ter o mesmo preço.</span></div>
+      <div class="form-grid"><label class="check-row"><input id="packageSellable" type="checkbox"> Vender este grupo como escolha própria no carrinho</label><label>Categoria da vitrine<select id="packageCategory"><option value="">Escolher categoria</option></select></label></div>
       <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
       <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
-      <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> Exigir pelo menos uma opção; o cliente não pode remover a última</label>
+      <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> O cliente deve manter pelo menos uma opção selecionada</label>
       <div class="form-grid"><label>Mínimo de opções selecionadas<input id="packageMin" type="number" min="0" step="1" value="0"></label><label>Máximo de opções selecionadas<input id="packageMax" type="number" min="0" step="1" placeholder="Sem limite"></label></div>
       <label class="check-row"><input id="packageActive" type="checkbox" checked> Ativo</label>
       <fieldset><legend>Componentes do pacote</legend><div id="packageComponentList" class="package-component-list"></div></fieldset>
@@ -205,6 +208,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-01"></script>
+  <script src="app.js?v=20261010-decay-sellable-groups"></script>
 </body>
 </html>
