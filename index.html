@@ -180,17 +180,6 @@
     </form>
   </dialog>
 
-  <dialog id="componentDialog">
-    <form id="componentForm" class="dialog-card">
-      <input id="componentId" type="hidden"><h2 id="componentDialogTitle">Componente</h2>
-      <label>Nome<input id="componentName" required maxlength="100"></label>
-      <label>Preço global<input id="componentPrice" type="number" min="0" step="0.01" required></label>
-      <label>Limite padrão por item<input id="componentMax" type="number" min="0" step="1" value="4"></label>
-      <label class="check-row"><input id="componentTracks" type="checkbox" checked> Controlar estoque</label><label class="check-row"><input id="componentActive" type="checkbox" checked> Componente ativo</label>
-      <div class="dialog-actions"><button id="deleteComponent" type="button" class="button danger-button" hidden>Excluir componente</button><span class="dialog-spacer"></span><button id="cancelComponent" type="button" class="button">Cancelar</button><button class="button primary">Salvar componente</button></div>
-    </form>
-  </dialog>
-
   <dialog id="packageDialog" class="wide-dialog">
     <form id="packageForm" class="dialog-card wide-card">
       <input id="packageId" type="hidden"><h2 id="packageDialogTitle">Grupo</h2>
@@ -216,6 +205,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-inventory-inline-group-components"></script>
+  <script src="app.js?v=20261010-groups-only-no-orphans"></script>
 </body>
 </html>
