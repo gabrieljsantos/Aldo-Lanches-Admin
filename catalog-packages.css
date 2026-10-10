@@ -1,0 +1,18 @@
+.package-list-card{display:grid;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(90px,.65fr)) auto;align-items:center;gap:12px;margin:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 10px #121e2a0f}
+.package-list-main{display:grid;grid-template-columns:max-content auto;align-items:center;justify-content:start;gap:7px 10px;min-width:0}
+.package-list-main>small{grid-column:1/-1;color:var(--muted);overflow-wrap:anywhere}
+.package-component-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:7px;max-height:38vh;overflow:auto}
+.package-component-row{display:grid!important;grid-template-columns:auto 1fr;align-items:center;gap:4px 9px!important;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.package-component-row>input{grid-row:1/3;width:auto!important}
+.package-component-row>small{color:var(--muted)}
+.item-package-list{display:grid;gap:8px;max-height:48vh;overflow:auto}
+.item-package-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.item-package-card>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;cursor:pointer;list-style:none}
+.item-package-card>summary::-webkit-details-marker{display:none}
+.item-package-card>summary>.check-row{margin-right:auto}
+.item-package-components{display:grid;gap:6px;padding:0 10px 10px}
+.item-package-component{display:grid;grid-template-columns:minmax(145px,1.3fr) repeat(4,minmax(70px,.6fr)) minmax(95px,.8fr);align-items:end;gap:8px;padding:8px;border-top:1px solid var(--line)}
+.item-package-component>label:not(.check-row){display:grid;gap:4px;color:var(--muted);font-size:.76rem}
+.item-package-component input[type=number]{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px}
+.item-package-component .check-row{font-size:.82rem}
+@media(max-width:800px){.package-list-card{grid-template-columns:1fr 1fr}.package-list-main{grid-column:1/-1}.item-package-component{grid-template-columns:1fr 1fr}.item-package-component>.check-row:first-child{grid-column:1/-1}}

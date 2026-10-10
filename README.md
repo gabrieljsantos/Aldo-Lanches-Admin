@@ -36,5 +36,7 @@ O Client ID e o Client Secret do Google devem ser cadastrados também em **Supab
 - fila de pedidos por estado;
 - confirmação humana dos candidatos interpretados pela IA;
 - estoque direto e componentes, com saldo absoluto ou registro agregado de vendas;
-- visão do catálogo;
+- catálogo com categorias hierárquicas, modos de estoque e CRUD de pacotes reutilizáveis de componentes;
 - administração das contas autorizadas.
+
+Os pacotes são gravados em `ingredient_package`, `package_component`, `item_package` e `item_component_config`, criadas pela migração de fundação. O cardápio público e a validação/precificação de pedidos ainda usam o vínculo legado `item_composition_association`; não considere o novo fluxo de pacotes ativo para clientes até a integração correspondente.
