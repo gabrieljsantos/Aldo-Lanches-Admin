@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261009-24">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261009-24">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261010-01">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261010-02">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -192,7 +192,7 @@
 
   <dialog id="packageDialog" class="wide-dialog">
     <form id="packageForm" class="dialog-card wide-card">
-      <input id="packageId" type="hidden"><h2 id="packageDialogTitle">Pacote</h2>
+      <input id="packageId" type="hidden"><h2 id="packageDialogTitle">Grupo</h2>
       <div class="form-grid"><label>Nome interno (só você)<input id="packageName" required maxlength="100" placeholder="Opções principais obrigatórias"></label><label>Nome no cardápio (cliente)<input id="packageCustomerName" required maxlength="100" placeholder="Recheios"></label></div>
       <label>Modo do grupo<select id="packageKind"><option value="adjustable">Delta — 0, 1 ou 2; não bloqueia o item</option><option value="scalable">Escalável — quantidade conforme limite/estoque</option><option value="decay">Decaimento — uma opção obrigatória por prioridade</option><option value="complementary">Complementar (compatibilidade antiga) — 0 ou 1</option><option value="single_required">Escolha única (compatibilidade antiga)</option></select></label>
       <div class="form-grid"><label>Franquia<select id="packageFranchiseMode"><option value="none">Sem franquia</option><option value="per_component">Individual por componente</option><option value="shared">Compartilhada pelo grupo</option></select></label><span>Na franquia compartilhada, os componentes do grupo devem ter o mesmo preço.</span></div>
@@ -202,12 +202,20 @@
       <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> O cliente deve manter pelo menos uma opção selecionada</label>
       <div class="form-grid"><label>Mínimo de opções selecionadas<input id="packageMin" type="number" min="0" step="1" value="0"></label><label>Máximo de opções selecionadas<input id="packageMax" type="number" min="0" step="1" placeholder="Sem limite"></label></div>
       <label class="check-row"><input id="packageActive" type="checkbox" checked> Ativo</label>
-      <fieldset><legend>Componentes do pacote</legend><div id="packageComponentList" class="package-component-list"></div></fieldset>
-      <div class="dialog-actions"><button id="deletePackage" type="button" class="button danger-button" hidden>Excluir pacote</button><span class="dialog-spacer"></span><button id="cancelPackage" type="button" class="button">Cancelar</button><button class="button primary">Salvar pacote</button></div>
+      <div class="dialog-actions"><button id="deletePackage" type="button" class="button danger-button" hidden>Excluir grupo</button><span class="dialog-spacer"></span><button id="cancelPackage" type="button" class="button">Cancelar</button><button class="button primary">Salvar grupo</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="groupComponentsDialog" class="wide-dialog">
+    <form id="groupComponentsForm" class="dialog-card wide-card">
+      <input id="groupComponentsPackageId" type="hidden"><h2 id="groupComponentsTitle">Gerenciar este grupo</h2>
+      <div class="group-component-add"><label>Componente existente<select id="groupComponentPicker"><option value="">Escolher componente</option></select></label><button id="addGroupComponent" type="button" class="button">Adicionar</button><button id="newGroupComponent" type="button" class="button primary">Novo componente</button></div>
+      <div id="groupComponentsList" class="group-components-list"></div>
+      <div class="dialog-actions"><span class="dialog-spacer"></span><button id="cancelGroupComponents" type="button" class="button">Cancelar</button><button class="button primary">Salvar componentes</button></div>
     </form>
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-decay-sellable-groups"></script>
+  <script src="app.js?v=20261010-group-component-crud"></script>
 </body>
 </html>

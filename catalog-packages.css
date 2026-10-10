@@ -7,6 +7,15 @@
 .package-component-row>small{color:var(--muted)}
 .package-component-row>span:last-child{grid-column:3;grid-row:1/3;display:grid;gap:4px;color:var(--muted);font-size:.72rem}
 .package-component-row [data-package-priority]{width:4.5rem;min-width:0;border:1px solid var(--line);border-radius:7px;padding:6px}
+.group-component-add{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:end;gap:8px}
+.group-component-add>label{display:grid;gap:7px;color:var(--muted)}
+.group-component-add select{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:11px}
+.group-components-list{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;max-height:52vh;overflow:auto}
+.group-component-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,auto) auto auto;align-items:center;gap:10px;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.group-component-row>div{display:grid;gap:3px;min-width:0}
+.group-component-row small{color:var(--muted)}
+.group-component-row>label{display:grid;gap:4px;color:var(--muted);font-size:.76rem}
+.group-component-row input[type=number]{width:78px;border:1px solid var(--line);border-radius:8px;padding:7px}
 .item-package-list{display:grid;gap:8px;max-height:48vh;overflow:auto}
 .item-package-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
 .item-package-card>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;cursor:pointer;list-style:none}
@@ -35,4 +44,5 @@
 .item-package-order input{width:54px;padding:5px;border:1px solid var(--line);border-radius:7px}
 .item-package-choice{margin-left:calc(var(--group-depth)*12px)}
 @media(max-width:800px){.package-list-card{grid-template-columns:1fr 1fr}.package-list-main{grid-column:1/-1}.item-package-component{grid-template-columns:1fr 1fr}.item-package-component>.check-row:first-child{grid-column:1/-1}}
+@media(max-width:680px){.group-component-add{grid-template-columns:1fr 1fr}.group-component-add>label{grid-column:1/-1}.group-component-row{grid-template-columns:minmax(0,1fr) auto}.group-component-row>label{grid-column:2;grid-row:1/3}.group-component-row>.button{justify-self:start}}
 @media(max-width:680px){.component-group-node{margin-left:calc(var(--group-depth)*5px);padding:9px}.component-group-heading{align-items:flex-start;flex-direction:column}.component-group-meta,.component-group-members{margin-left:0}.component-group-row{grid-template-columns:minmax(0,1fr) auto}.component-group-row>.button{grid-column:1/-1;justify-self:end}}
