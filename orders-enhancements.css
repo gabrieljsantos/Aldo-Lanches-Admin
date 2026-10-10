@@ -39,3 +39,14 @@
 .compact-order-name.status-delivery{background:#eaf6ed;border-color:#b7d9bf}
 .compact-order-name.status-delivered{background:#edf3f8;border-color:#c5d4df}
 @media(max-width:850px){.orders-tabs{gap:3px}.orders-tabs button{height:34px;padding:0 7px;gap:4px}.orders-tabs button strong{font-size:.72rem}.orders-tabs .orders-settings-open{margin-left:auto;width:34px;min-width:34px}.order-item-changes{gap:3px}.order-change-chip{padding:3px 7px;font-size:.7rem}}
+
+/* A rolagem é da página/lista inteira; a coluna lateral acompanha a tela. */
+.orders-mode .workspace{height:auto;min-height:100dvh;overflow:visible}
+.orders-mode #ordersView.active{display:block;height:auto;min-height:0}
+.orders-mode #ordersView .orders-layout{height:auto;min-height:calc(100dvh - 56px);align-items:start}
+.orders-mode #ordersView .orders-primary-panel{height:auto;min-height:0;overflow:visible}
+.orders-mode #ordersView .orders-list{height:auto;min-height:0;grid-auto-rows:max-content;overflow:visible;overscroll-behavior:auto;scrollbar-gutter:auto}
+.orders-mode #ordersView .order-row{height:auto;min-height:220px;max-height:none;overflow:visible}
+.orders-mode #ordersView .order-items{height:auto;max-height:none;overflow:visible;overscroll-behavior:auto}
+.orders-mode #ordersView .orders-side-panel{position:sticky;top:8px;height:calc(100dvh - 16px);min-height:0;align-self:start;overflow:hidden}
+@media(max-width:850px){.orders-mode #ordersView .orders-layout{min-height:0}.orders-mode #ordersView .orders-side-panel{position:static;height:auto;min-height:42vh;overflow:visible}.orders-mode #ordersView .orders-primary-panel{height:auto;min-height:60vh}.orders-mode #ordersView .orders-list{height:auto;min-height:0;overflow:visible}.orders-mode #ordersView .order-row{min-height:0}}

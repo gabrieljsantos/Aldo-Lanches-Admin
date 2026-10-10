@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261009-24">
-  <link rel="stylesheet" href="orders-enhancements.css?v=20261009-24">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261010-02">
+  <link rel="stylesheet" href="orders-enhancements.css?v=20261010-sticky-scroll">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261010-item-composition-list">
   <link rel="stylesheet" href="inventory.css?v=20261010-01">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -157,17 +157,20 @@
 
   <dialog id="itemDialog" class="wide-dialog">
     <form id="itemForm" class="dialog-card wide-card">
-      <input id="itemId" type="hidden"><h2 id="itemDialogTitle">Item</h2>
-      <div class="form-grid"><label>Nome<input id="itemName" required maxlength="100"></label><label>Categoria<select id="itemCategory"><option value="">Sem categoria</option></select></label></div>
+      <input id="itemId" type="hidden"><input id="itemKind" type="hidden"><input id="itemCategory" type="hidden"><h2 id="itemDialogTitle">Item</h2>
+      <label>Nome<input id="itemName" required maxlength="100"></label>
       <label>Descrição<textarea id="itemDescription" maxlength="500" rows="3"></textarea></label>
-      <div class="form-grid"><label>Preço<input id="itemPrice" type="number" min="0" step="0.01" required></label><label>Prioridade<input id="itemPriority" type="number" step="1" value="0"></label></div>
-      <label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label>
+      <label><span id="itemPriceLabel">Preço</span><input id="itemPrice" type="number" min="0" step="0.01" required></label>
       <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
-      <fieldset><legend>Imagens do item</legend><label>Enviar imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>Enviar imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>Enviar imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>Ou usar URL da imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>URL da imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>URL da imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><p class="fine-print">As imagens enviadas ficam vinculadas ao item no bucket do catálogo.</p></fieldset>
-      <fieldset><legend>Grupos de componentes</legend><div id="itemPackageList" class="item-package-list"></div></fieldset>
-      <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
+      <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><button id="manageItemPhotos" type="button" class="button" hidden>▧ Gerenciar fotos</button><button id="editItemComposition" type="button" class="button" hidden>Editar composição</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
     </form>
   </dialog>
+
+  <dialog id="itemPhotosDialog" class="wide-dialog"><form id="itemPhotosForm" class="dialog-card wide-card"><input id="photoItemId" type="hidden"><h2 id="itemPhotosTitle">Fotos</h2><label>Imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>URL principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>Imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>URL 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>Imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>URL 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><div class="dialog-actions"><button id="cancelItemPhotos" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button class="button primary">Salvar fotos</button></div></form></dialog>
+
+  <dialog id="itemCompositionDialog" class="wide-dialog"><div class="dialog-card wide-card"><input id="compositionItemId" type="hidden"><h2 id="compositionItemTitle">Composição</h2><div class="association-toolbar"><select id="compositionPackageSelect"><option value="">Selecionar grupo</option></select><button id="addCompositionPackage" type="button" class="button primary">Associar grupo</button></div><div id="itemPackageList" class="item-package-list"></div><div class="dialog-actions"><span class="dialog-spacer"></span><button id="closeItemComposition" type="button" class="button">Fechar</button></div></div></dialog>
+
+  <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button class="button primary">Salvar associação</button></div></form></dialog>
 
   <dialog id="categoryDialog">
     <form id="categoryForm" class="dialog-card">
@@ -175,8 +178,17 @@
       <label>Nome<input id="categoryName" required maxlength="100"></label>
       <label>Categoria pai<select id="categoryParent"><option value="">Raiz</option></select></label>
       <label>Modo de exibição<select id="categoryDisplay"><option value="lista">Lista</option><option value="lista-dupla">Lista dupla</option><option value="grade">Grade</option><option value="grid">Grid legado</option></select></label>
+      <label>Conteúdo<select id="categoryComponentPackage"><option value="">Itens do cardápio</option></select></label>
       <label>Prioridade<input id="categoryPriority" type="number" step="1" value="0"></label>
       <div class="dialog-actions"><button id="deleteCategory" type="button" class="button danger-button" hidden>Excluir categoria</button><span class="dialog-spacer"></span><button id="cancelCategory" type="button" class="button">Cancelar</button><button class="button primary">Salvar categoria</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="packagePresentationDialog" class="wide-dialog">
+    <form id="packagePresentationForm" class="dialog-card wide-card">
+      <h2 id="presentationDialogTitle">Representações</h2>
+      <div id="packagePresentationList" class="component-presentations-list"></div>
+      <div class="dialog-actions"><span class="dialog-spacer"></span><button id="cancelPackagePresentations" type="button" class="button">Cancelar</button><button id="savePackagePresentations" class="button primary">Salvar representações</button></div>
     </form>
   </dialog>
 
@@ -186,7 +198,7 @@
       <div class="form-grid"><label>Nome interno (só você)<input id="packageName" required maxlength="100" placeholder="Opções principais obrigatórias"></label><label>Nome no cardápio (cliente)<input id="packageCustomerName" required maxlength="100" placeholder="Recheios"></label></div>
       <label>Modo do grupo<select id="packageKind"><option value="adjustable">Delta — 0, 1 ou 2; não bloqueia o item</option><option value="scalable">Escalável — quantidade conforme limite/estoque</option><option value="decay">Decaimento — uma opção obrigatória por prioridade</option><option value="complementary">Complementar (compatibilidade antiga) — 0 ou 1</option><option value="single_required">Escolha única (compatibilidade antiga)</option></select></label>
       <div class="form-grid"><label>Franquia<select id="packageFranchiseMode"><option value="none">Sem franquia</option><option value="per_component">Individual por componente</option><option value="shared">Compartilhada pelo grupo</option></select></label><span>Na franquia compartilhada, os componentes do grupo devem ter o mesmo preço.</span></div>
-      <div class="form-grid"><label class="check-row"><input id="packageSellable" type="checkbox"> Vender este grupo como escolha própria no carrinho</label><label>Categoria da vitrine<select id="packageCategory"><option value="">Escolher categoria</option></select></label></div>
+      <label class="check-row"><input id="packageSellable" type="checkbox"> Componentes disponíveis como escolhas próprias no carrinho</label>
       <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
       <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
       <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> O cliente deve manter pelo menos uma opção selecionada</label>
@@ -205,6 +217,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-groups-only-no-orphans"></script>
+  <script src="app.js?v=20261010-item-composition-list"></script>
 </body>
 </html>
