@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261009-24">
-  <link rel="stylesheet" href="orders-enhancements.css?v=20261010-sticky-scroll">
+  <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
   <link rel="stylesheet" href="catalog-packages.css?v=20261010-root-catalog-toolbar">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -43,7 +43,7 @@
   <div id="appView" class="app-shell" hidden>
     <main class="workspace">
       <header class="topbar">
-        <button class="button home-return" data-view="home">← Início</button>
+        <button class="button home-return" data-view="home">← Voltar</button>
         <div class="topbar-actions"><button id="refresh" class="button">Atualizar</button></div>
       </header>
 
@@ -69,10 +69,11 @@
 
       <section id="ordersView" class="view">
         <nav id="ordersTabs" class="orders-tabs" role="tablist" aria-label="Navegação dos pedidos">
-          <button type="button" role="tab" data-order-tab="-1" aria-label="Pedidos aguardando confirmação" title="Aguardando confirmação"><span>−1</span><strong>Aguardando</strong><span data-order-count="pending">0</span></button>
-          <button type="button" role="tab" data-order-tab="0" aria-label="Pedidos ativos" title="Pedidos ativos"><span>0</span><strong>Pedidos</strong><span data-order-count="active">0</span></button>
-          <button type="button" role="tab" data-order-tab="1" aria-label="Pedidos em entrega" title="Em entrega"><span>1</span><strong>Em entrega</strong><span data-order-count="delivery">0</span></button>
-          <button type="button" role="tab" data-order-tab="2" aria-label="Pedidos entregues" title="Entregues"><span>2</span><strong>Entregues</strong><span data-order-count="delivered">0</span></button>
+          <button class="button home-return orders-back" type="button" data-view="home" aria-label="Voltar ao início">← Voltar</button>
+          <button type="button" role="tab" data-order-tab="-1" aria-label="Pedidos aguardando confirmação" title="Aguardando confirmação"><strong>Aguardando</strong><span data-order-count="pending">0</span></button>
+          <button type="button" role="tab" data-order-tab="0" aria-label="Pedidos ativos" title="Pedidos ativos"><strong>Pedidos</strong><span data-order-count="active">0</span></button>
+          <button type="button" role="tab" data-order-tab="1" aria-label="Pedidos em entrega" title="Em entrega"><strong>Em entrega</strong><span data-order-count="delivery">0</span></button>
+          <button type="button" role="tab" data-order-tab="2" aria-label="Pedidos entregues" title="Entregues"><strong>Entregues</strong><span data-order-count="delivered">0</span></button>
           <button id="orderSettingsOpen" class="orders-settings-open" type="button" aria-label="Configurar aceitação automática" title="Configurações">⚙</button>
         </nav>
         <div class="orders-layout">
@@ -84,7 +85,7 @@
               <section class="orders-secondary-panel orders-delivery-panel"><div id="deliveryOrders" class="compact-order-list"></div></section>
               <section class="orders-secondary-panel orders-delivered-panel"><div id="deliveredOrders" class="compact-order-list"></div></section>
             </div>
-            <div class="orders-controls"><button class="button home-return" data-view="home">← Início</button><button id="ordersRefresh" class="button">Atualizar</button></div>
+            <div class="orders-controls"><button id="ordersRefresh" class="button">Atualizar</button></div>
           </aside>
         </div>
       </section>

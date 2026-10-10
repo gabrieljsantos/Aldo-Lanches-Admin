@@ -50,3 +50,11 @@
 .orders-mode #ordersView .order-items{height:auto;max-height:none;overflow:visible;overscroll-behavior:auto}
 .orders-mode #ordersView .orders-side-panel{position:sticky;top:8px;height:calc(100dvh - 16px);min-height:0;align-self:start;overflow:hidden}
 @media(max-width:850px){.orders-mode #ordersView .orders-layout{min-height:0}.orders-mode #ordersView .orders-side-panel{position:static;height:auto;min-height:42vh;overflow:visible}.orders-mode #ordersView .orders-primary-panel{height:auto;min-height:60vh}.orders-mode #ordersView .orders-list{height:auto;min-height:0;overflow:visible}.orders-mode #ordersView .order-row{min-height:0}}
+.orders-tabs{min-height:46px;flex-basis:46px;gap:8px;padding:5px 8px;border:1px solid var(--line);border-radius:13px;background:#ffffffde;box-shadow:0 3px 12px #18283a0b}
+.orders-tabs [role="tab"]{height:36px;min-width:0;padding:0 12px;gap:8px;border:1px solid transparent;border-radius:10px;font-size:.86rem;white-space:nowrap}
+.orders-tabs [role="tab"] span{font-size:.8rem}
+.orders-tabs [role="tab"].active{border-color:#f7c5a4;background:#fff0e6;color:#a84312}
+.orders-tabs .orders-back{height:36px;min-width:0;margin-right:8px;padding:0 12px;border:0;border-radius:10px;background:#243b53;color:#fff;font-size:.86rem;font-weight:800;white-space:nowrap}
+.orders-tabs .orders-back:hover{background:#172b40}
+.orders-tabs .orders-settings-open{margin-left:auto}
+@media(max-width:850px){.orders-tabs{position:sticky;top:0;z-index:5;overflow-x:auto;flex:0 0 auto;max-width:100%;border-radius:12px}.orders-tabs .orders-back{position:sticky;left:0;z-index:1}}
