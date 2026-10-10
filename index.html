@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="styles.css?v=20261009-24">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261009-24">
   <link rel="stylesheet" href="catalog-packages.css?v=20261010-02">
+  <link rel="stylesheet" href="inventory.css?v=20261010-01">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -108,7 +109,7 @@
       <section id="stockView" class="view">
         <div class="section-heading inventory-heading"><div class="section-copy"><h2>Inventário</h2></div><button id="saveInventory" class="button primary" disabled>Salvar alterações <span id="inventoryChangeCount">(0)</span></button></div>
         <div class="inventory-metrics"><span id="stockTotal">Itens: 0</span><span id="stockVisible">Visíveis: 0</span><span id="stockFinished">Finalizados: 0</span><span id="stockHidden">Ocultos: 0</span></div>
-        <div class="toolbar"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"><select id="stockKind"><option value="all">Itens e componentes</option><option value="item">Itens do cardápio</option><option value="composition">Componentes</option></select><select id="stockState"><option value="all">Todos os estados</option><option value="visible">Visíveis</option><option value="finished">Finalizados</option><option value="hidden">Ocultos</option></select></div>
+        <div class="inventory-toolbar"><div class="inventory-tabs" role="tablist" aria-label="Tipo de estoque"><button type="button" class="active" role="tab" aria-selected="true" data-stock-kind="all">Todos</button><button type="button" role="tab" aria-selected="false" data-stock-kind="item">Itens</button><button type="button" role="tab" aria-selected="false" data-stock-kind="composition">Composição</button></div><div class="toolbar inventory-filters"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"><select id="stockState"><option value="all">Todos os estados</option><option value="visible">Visíveis</option><option value="finished">Finalizados</option><option value="hidden">Ocultos</option></select></div><select id="stockKind" hidden aria-hidden="true"><option value="all">Todos</option><option value="item">Itens</option><option value="composition">Composição</option></select></div>
         <div id="stockList" class="inventory-groups"></div>
       </section>
 
@@ -160,7 +161,7 @@
       <div class="form-grid"><label>Nome<input id="itemName" required maxlength="100"></label><label>Categoria<select id="itemCategory"><option value="">Sem categoria</option></select></label></div>
       <label>Descrição<textarea id="itemDescription" maxlength="500" rows="3"></textarea></label>
       <div class="form-grid"><label>Preço<input id="itemPrice" type="number" min="0" step="0.01" required></label><label>Prioridade<input id="itemPriority" type="number" step="1" value="0"></label></div>
-      <div class="form-grid"><label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label><label id="itemStockLabel">Quantidade atual<input id="itemStock" type="number" min="0" step="1" required></label></div>
+      <label>Controle de estoque<select id="itemStockMode"><option value="direct">Estoque direto do item</option><option value="composition">Disponibilidade pelos componentes</option></select></label>
       <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
       <fieldset><legend>Imagens do item</legend><label>Enviar imagem principal<input id="itemPhotoFile1" type="file" accept="image/*"></label><label>Enviar imagem 2<input id="itemPhotoFile2" type="file" accept="image/*"></label><label>Enviar imagem 3<input id="itemPhotoFile3" type="file" accept="image/*"></label><label>Ou usar URL da imagem principal<input id="itemPhoto1" type="url" placeholder="https://..."></label><label>URL da imagem 2<input id="itemPhoto2" type="url" placeholder="https://..."></label><label>URL da imagem 3<input id="itemPhoto3" type="url" placeholder="https://..."></label><p class="fine-print">As imagens enviadas ficam vinculadas ao item no bucket do catálogo.</p></fieldset>
       <fieldset><legend>Grupos de componentes</legend><div id="itemPackageList" class="item-package-list"></div></fieldset>
@@ -183,7 +184,7 @@
     <form id="componentForm" class="dialog-card">
       <input id="componentId" type="hidden"><h2 id="componentDialogTitle">Componente</h2>
       <label>Nome<input id="componentName" required maxlength="100"></label>
-      <div class="form-grid"><label>Preço global<input id="componentPrice" type="number" min="0" step="0.01" required></label><label>Quantidade atual<input id="componentStock" type="number" min="0" step="1" required></label></div>
+      <label>Preço global<input id="componentPrice" type="number" min="0" step="0.01" required></label>
       <label>Limite padrão por item<input id="componentMax" type="number" min="0" step="1" value="4"></label>
       <label class="check-row"><input id="componentTracks" type="checkbox" checked> Controlar estoque</label><label class="check-row"><input id="componentActive" type="checkbox" checked> Componente ativo</label>
       <div class="dialog-actions"><button id="deleteComponent" type="button" class="button danger-button" hidden>Excluir componente</button><span class="dialog-spacer"></span><button id="cancelComponent" type="button" class="button">Cancelar</button><button class="button primary">Salvar componente</button></div>
@@ -209,13 +210,12 @@
   <dialog id="groupComponentsDialog" class="wide-dialog">
     <form id="groupComponentsForm" class="dialog-card wide-card">
       <input id="groupComponentsPackageId" type="hidden"><h2 id="groupComponentsTitle">Gerenciar este grupo</h2>
-      <div class="group-component-add"><label>Componente existente<select id="groupComponentPicker"><option value="">Escolher componente</option></select></label><button id="addGroupComponent" type="button" class="button">Adicionar</button><button id="newGroupComponent" type="button" class="button primary">Novo componente</button></div>
-      <div id="groupComponentsList" class="group-components-list"></div>
+      <div class="group-component-table-wrap"><div class="group-component-table-head"><span>Nome</span><span>Preço</span><span>Franquia grátis</span><span>Limite</span><span>Prioridade</span><span></span></div><div id="groupComponentsList" class="group-components-list"></div><button id="addGroupComponent" type="button" class="button">+ Linha</button></div>
       <div class="dialog-actions"><span class="dialog-spacer"></span><button id="cancelGroupComponents" type="button" class="button">Cancelar</button><button class="button primary">Salvar componentes</button></div>
     </form>
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-group-component-crud"></script>
+  <script src="app.js?v=20261010-inventory-inline-group-components"></script>
 </body>
 </html>
