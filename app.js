@@ -17,6 +17,7 @@
 
   function toast(message,error=false){const el=$("toast");el.textContent=message;el.style.borderColor=error?"var(--red)":"var(--green)";el.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.hidden=true,4200)}
   function money(value){return Number(value||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+  function orderQuantityBadge(quantity){const count=Math.max(0,Math.trunc(Number(quantity)||0));return count>1?`<span class="item-quantity-badge" data-quantity="${Math.min(count,8)}">${count}</span>`:""}
   function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
   function slug(value){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"registro"}
   async function query(table,select="*"){const {data,error}=await db.from(table).select(select);if(error)throw error;return data||[]}
@@ -74,10 +75,10 @@
     });
     const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
     const note=item.notes?`<small>${escapeHtml(item.notes)}</small>`:"";
-    const quantityBadge=quantity>1?`<span class="item-quantity-badge" data-quantity="${Math.min(quantity,8)}">${quantity}</span>`:"";
+    const quantityBadge=orderQuantityBadge(quantity);
     return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div class="order-item-copy"><div class="order-item-title">${quantityBadge}<strong>${escapeHtml(item.item_name||item.name||"Item")}</strong></div>${changes.length?`<div class="order-item-changes">${changes.join("")}</div>`:""}${note}</div></div>`;
   }
-  function sellableTotalsMarkup(order){return (order.order_sellable_component_totals||[]).filter(row=>Number(row.quantity)>0).map(row=>{const photo=row.snapshot?.representation?.photo_url_1;return `<div class="order-item pooled-order-component"><span class="order-item-photo" aria-hidden="true">${photo?`<img src="${escapeHtml(photo)}" alt="">`:""}</span><div class="order-item-copy"><strong>${escapeHtml(row.component_name)} ×${Number(row.quantity)}</strong>${row.snapshot?.representation?.description?`<small>${escapeHtml(row.snapshot.representation.description)}</small>`:""}${Number(row.charged_quantity)>0?`<small>${Number(row.charged_quantity)} adicional(is) · ${money(Number(row.charged_quantity)*Number(row.unit_price))}</small>`:""}</div></div>`}).join("")}
+  function sellableTotalsMarkup(order){return (order.order_sellable_component_totals||[]).filter(row=>Number(row.quantity)>0).map(row=>{const photo=row.snapshot?.representation?.photo_url_1,quantity=Math.max(1,Number(row.quantity)||1);return `<div class="order-item pooled-order-component"><span class="order-item-photo" aria-hidden="true">${photo?`<img src="${escapeHtml(photo)}" alt="">`:""}</span><div class="order-item-copy"><div class="order-item-title">${orderQuantityBadge(quantity)}<strong>${escapeHtml(row.component_name)}</strong></div>${row.snapshot?.representation?.description?`<small>${escapeHtml(row.snapshot.representation.description)}</small>`:""}${Number(row.charged_quantity)>0?`<small>${Number(row.charged_quantity)} adicional(is) · ${money(Number(row.charged_quantity)*Number(row.unit_price))}</small>`:""}</div></div>`}).join("")}
   function renderOrders(){
     const pending=state.orders.filter(order=>order.status==="pending_confirmation");
     const pendingCandidates=state.candidates;
