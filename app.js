@@ -178,7 +178,7 @@
       const members=state.packageComponents.filter(row=>row.package_id===pack.id).sort((a,b)=>(a.sort_priority||0)-(b.sort_priority||0)).map(row=>state.components.find(component=>String(component.id)===String(row.composition_id))).filter(Boolean);
       const children=packageTreeRows(pack.id,level+1,term),products=state.itemPackages.filter(row=>row.package_id===pack.id).length;
       const visibleMembers=members.filter(component=>!term||component.name.toLocaleLowerCase().includes(term)||pack.name.toLocaleLowerCase().includes(term));
-      return `<section class="component-group-node" style="--group-depth:${Math.min(level,5)}"><header class="component-group-heading"><div><span class="component-group-index">${Number(pack.sort_priority)||0}</span><strong>${escapeHtml(pack.name)}</strong><span class="pill">${escapeHtml(packageKindLabels[pack.kind]||pack.kind)}</span><span class="pill">${escapeHtml(packageAvailabilityLabels[pack.availability_rule]||"Regra não definida")}</span></div><div class="actions"><button class="button" data-package-add-child="${escapeHtml(pack.id)}">+ Grupo</button><button class="button" data-package-edit="${escapeHtml(pack.id)}">Editar grupo</button></div></header><div class="component-group-meta"><span>${visibleMembers.length} componente(s)</span><span>${products} item(ns)</span>${pack.is_active===false?"<span>Desativado</span>":""}</div><div class="component-group-members">${visibleMembers.map(componentRow).join("")||"<small>Sem componentes</small>"}</div>${children}</section>`;
+      return `<section class="component-group-node" style="--group-depth:${Math.min(level,5)}"><header class="component-group-heading"><div><span class="component-group-index">${Number(pack.sort_priority)||0}</span><strong>${escapeHtml(pack.name)}</strong><span class="pill">${escapeHtml(packageKindLabels[pack.kind]||pack.kind)}</span><span class="pill">${escapeHtml(packageAvailabilityLabels[pack.availability_rule]||"Regra não definida")}</span></div><div class="actions"><button class="button" data-package-add-child="${escapeHtml(pack.id)}">+ Grupo</button><button class="button" data-package-edit="${escapeHtml(pack.id)}">Editar grupo</button><button class="button danger-button" data-package-delete="${escapeHtml(pack.id)}">Excluir grupo</button></div></header><div class="component-group-meta"><span>${visibleMembers.length} componente(s)</span><span>${products} item(ns)</span>${pack.is_active===false?"<span>Desativado</span>":""}</div><div class="component-group-members">${visibleMembers.map(componentRow).join("")||"<small>Sem componentes</small>"}</div>${children}</section>`;
     }).join("")
   }
   function renderComponents(){
@@ -221,7 +221,16 @@
     if(rows.length){const {error}=await db.from("package_component").upsert(rows,{onConflict:"package_id,composition_id"});if(error){toast(`Pacote salvo, mas não foi possível salvar componentes e prioridades: ${error.message}`,true);await loadCatalog();return}}
     $("packageDialog").close();toast(id?"Pacote atualizado.":"Pacote criado.");await loadCatalog()
   }
-  async function deletePackage(){const id=$("packageId").value;if(!id)return;const count=state.itemPackages.filter(row=>row.package_id===id).length;if(!confirm(count?`Este pacote está associado a ${count} item(ns). Excluí-lo também removerá essas associações. Continuar?`:"Excluir este pacote?") )return;const {error}=await db.from("ingredient_package").delete().eq("id",id);if(error){toast(error.message,true);return}$("packageDialog").close();toast("Pacote excluído.");await loadCatalog()}
+  async function deletePackage(id=$("packageId").value){
+    if(!id)return;
+    const pack=state.packages.find(entry=>String(entry.id)===String(id));if(!pack)return;
+    const itemCount=state.itemPackages.filter(row=>String(row.package_id)===String(id)).length;
+    const childCount=state.packages.filter(row=>String(row.parent_id||"")===String(id)).length;
+    const confirmation=prompt(`Excluir o grupo “${pack.name}”${itemCount?`? Ele está associado a ${itemCount} item(ns), e essas associações também serão removidas`:"?"}${childCount?`; ${childCount} grupo(s) filho(s) permanecerão como grupos raiz`:""}. Os itens e categorias serão mantidos. Digite SIM para confirmar.`);
+    if(confirmation?.trim().toLocaleLowerCase()!=="sim")return;
+    const {error}=await db.from("ingredient_package").delete().eq("id",id);if(error){toast(error.message,true);return}
+    $("packageDialog").close();toast(`Grupo “${pack.name}” excluído.`);await loadCatalog()
+  }
 
   function inventoryKey(kind,id){return `${kind}:${id}`}
   function inventoryBase(x){const hidden=x.kind==="composition"?x.is_active===false:Number(x.stock||0)<0,stock=Math.max(0,Number(x.stock||0));return{kind:x.kind,id:String(x.id),hidden,finished:!hidden&&stock===0,stock}}
@@ -379,7 +388,7 @@
   $("newPackage").addEventListener("click",()=>openPackage());
   $("packageForm").addEventListener("submit",savePackage);
   $("cancelPackage").addEventListener("click",() => $("packageDialog").close());
-  $("deletePackage").addEventListener("click",deletePackage);
-  document.addEventListener("click",e=>{const addGroup=e.target.closest("[data-package-add-child]");if(addGroup){openPackage("",addGroup.dataset.packageAddChild);return}const pack=e.target.closest("[data-package-edit]");if(pack)openPackage(pack.dataset.packageEdit)});
+  $("deletePackage").addEventListener("click",()=>deletePackage());
+  document.addEventListener("click",e=>{const removeGroup=e.target.closest("[data-package-delete]");if(removeGroup){deletePackage(removeGroup.dataset.packageDelete);return}const addGroup=e.target.closest("[data-package-add-child]");if(addGroup){openPackage("",addGroup.dataset.packageAddChild);return}const pack=e.target.closest("[data-package-edit]");if(pack)openPackage(pack.dataset.packageEdit)});
   db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){state.session=null;show("login");return}if(event==="SIGNED_IN"&&session?.user?.id!==state.session?.user?.id)setTimeout(bootstrap,0)});bootstrap();
 })();
