@@ -53,14 +53,16 @@
 .menu-item-card.composed-item-card{grid-template-columns:112px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;align-items:start;min-height:148px}
 .menu-item-card.composed-item-card>img,.menu-item-card.composed-item-card>.item-placeholder{grid-column:1;grid-row:1/3;align-self:center}
 .menu-item-card.composed-item-card>.menu-item-copy{grid-column:2;grid-row:1;min-width:0;padding:0;display:grid;align-content:start;gap:5px}
-.menu-item-card.composed-item-card .menu-item-title{align-items:flex-start;min-width:0}
-.menu-item-card.composed-item-card .menu-item-title>strong{min-width:0;overflow-wrap:anywhere}
-.menu-item-card.composed-item-card .menu-item-price{flex:0 0 auto}
+.menu-item-card.composed-item-card .menu-item-title{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;min-width:0}
+.menu-item-card.composed-item-card .menu-item-title>strong{min-width:0;overflow-wrap:break-word;word-break:normal;line-height:1.25}
+.menu-item-card.composed-item-card .menu-item-price{display:flex;flex-wrap:wrap;justify-items:initial;justify-content:flex-start;align-items:baseline;gap:3px 8px;text-align:left;white-space:normal}
+.menu-item-card.composed-item-card .menu-item-price>strong{font-size:1rem}
+.menu-item-card.composed-item-card .menu-item-price>small{font-size:.72rem}
 .menu-item-card.composed-item-card .menu-item-copy>p{margin:0}
 .menu-item-card.composed-item-card .composed-item-meta{display:flex;gap:7px;margin:0}
 .composed-group-tags{display:grid;gap:4px;min-width:0}
-.composed-group-tag{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:4px 7px;border:1px solid #f2d1b4;border-radius:8px;background:#fffdf9;color:#344253;font-size:.75rem;line-height:1.35}
-.composed-group-tag>strong{color:#a94a14;font-size:.76rem}
+.composed-group-tag{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;padding:6px 8px;border:1px solid #f2d1b4;border-radius:8px;background:#fffdf9;color:#344253;font-size:.75rem;line-height:1.35}
+.composed-group-tag>strong{color:#a94a14;font-size:.78rem;line-height:1.25;overflow-wrap:anywhere}
 .composed-group-tag>span{min-width:0;overflow-wrap:anywhere}
 .menu-item-card.composed-item-card>.item-card-actions{position:static;grid-column:2;grid-row:2;justify-self:end;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:100%;gap:6px;margin:7px 0 0}
 .menu-item-copy>.item-status-meta{position:static;min-height:0;margin:0}
