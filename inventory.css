@@ -4,6 +4,19 @@
 .inventory-tabs button.active{border-color:var(--primary);color:var(--primary-strong)}
 .inventory-filters{margin:0}
 .inventory-filters select{max-width:220px}
+.inventory-row .inventory-photo{width:64px;height:58px;min-width:64px;max-width:64px;display:grid;place-items:center}
+.inventory-row{grid-template-columns:64px minmax(180px,1fr) minmax(260px,.8fr);gap:12px}
+.availability-row{display:grid;grid-template-columns:64px minmax(180px,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid #edf1f4;background:#fff}
+.availability-row:last-child{border:0}
+.availability-row.is-changed{background:#fff4d6;box-shadow:inset 5px 0 #f59e0b}
+.availability-row .inventory-name{min-width:0}
+.availability-row .inventory-name strong,.availability-row .inventory-name small{display:block;overflow-wrap:anywhere}
+.availability-row .inventory-name small{margin-top:3px;color:var(--muted)}
+.availability-toggle{min-width:130px;font-weight:800}
+.availability-toggle.is-active{border-color:#b7dfc9;background:#eaf7ef;color:#17633b}
+.availability-toggle.is-archived{border-color:#e4c6b6;background:#fff1e8;color:#99420e}
+.inventory-row .stock-steps{min-width:0}
+@media(max-width:800px){.inventory-row{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"photo name" "photo stock"}.inventory-row .inventory-photo{grid-area:photo}.inventory-row .inventory-name{grid-area:name}.inventory-row .stock-steps{grid-area:stock}.availability-row{grid-template-columns:56px minmax(0,1fr);grid-template-areas:"photo name" "photo toggle"}.availability-row .inventory-photo{grid-area:photo;width:52px;height:52px;min-width:52px;max-width:52px}.availability-row .inventory-name{grid-area:name}.availability-row .availability-toggle{grid-area:toggle;width:100%;min-width:0}}
 @media(max-width:700px){.inventory-filters{display:grid;grid-template-columns:1fr}.inventory-filters select{max-width:none}}
 .group-component-table-wrap{display:grid;gap:8px;min-width:0}
 .group-component-table-head,.group-component-row{display:grid;grid-template-columns:minmax(180px,2fr) minmax(90px,.8fr) minmax(110px,.9fr) minmax(90px,.75fr) minmax(90px,.75fr) 42px;gap:8px;align-items:center}

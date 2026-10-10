@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="styles.css?v=20261009-24">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-sticky-scroll">
   <link rel="stylesheet" href="catalog-packages.css?v=20261010-item-order-mode">
-  <link rel="stylesheet" href="inventory.css?v=20261010-01">
+  <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -51,12 +51,13 @@
         <header class="app-header">
           <div class="brand header-brand"><img src="https://raw.githubusercontent.com/gabrieljsantos/Cardapio_Aldo_Lanches/main/assets/Aldo%20Lanches%20logo.jpg" alt="Logo Aldo Lanches"><span><strong>Aldo Lanches</strong><small>Administração</small></span></div>
           <div class="header-account"><span id="sessionEmail"></span><button id="logout" class="link-button">Sair</button></div>
-          <details class="view-menu"><summary aria-label="Abrir navegação">☰</summary><nav id="nav" class="nav"><button data-view="orders">Pedidos</button><button data-view="candidates">Confirmações IA</button><button data-view="stock">Inventário</button><button data-view="items">Itens</button><button data-view="categories">Categorias</button><button data-view="components">Componentes</button><button data-view="customers">Cadastros</button><button data-view="admins">Administradores</button></nav></details>
+          <details class="view-menu"><summary aria-label="Abrir navegação">☰</summary><nav id="nav" class="nav"><button data-view="orders">Pedidos</button><button data-view="candidates">Confirmações IA</button><button data-view="stock">Inventário</button><button data-view="visibility">Visibilidade</button><button data-view="items">Itens</button><button data-view="categories">Categorias</button><button data-view="components">Componentes</button><button data-view="customers">Cadastros</button><button data-view="admins">Administradores</button></nav></details>
         </header>
         <div class="home-intro"><span class="eyebrow">Aldo Lanches</span><h1 id="viewTitle">Administração</h1></div>
         <div class="home-grid">
           <button class="home-tile" data-view="orders"><span class="home-icon">▤</span><strong>Pedidos</strong><small>Acompanhar e atualizar pedidos</small></button>
-          <button class="home-tile" data-view="stock"><span class="home-icon">▦</span><strong>Inventário</strong><small>Disponibilidade e quantidades</small></button>
+          <button class="home-tile" data-view="stock"><span class="home-icon">▦</span><strong>Inventário</strong><small>Quantidades</small></button>
+          <button class="home-tile" data-view="visibility"><span class="home-icon">◉</span><strong>Visibilidade</strong><small>No cardápio ou arquivado</small></button>
           <button class="home-tile" data-view="items"><span class="home-icon">☷</span><strong>Itens</strong><small>Produtos do cardápio</small></button>
           <button class="home-tile" data-view="categories"><span class="home-icon">▧</span><strong>Categorias</strong><small>Organização do cardápio</small></button>
           <button class="home-tile" data-view="components"><span class="home-icon">◈</span><strong>Componentes</strong><small>Ingredientes e complementos</small></button>
@@ -108,9 +109,14 @@
 
       <section id="stockView" class="view">
         <div class="section-heading inventory-heading"><div class="section-copy"><h2>Inventário</h2></div><button id="saveInventory" class="button primary" disabled>Salvar alterações <span id="inventoryChangeCount">(0)</span></button></div>
-        <div class="inventory-metrics"><span id="stockTotal">Itens: 0</span><span id="stockVisible">Visíveis: 0</span><span id="stockFinished">Finalizados: 0</span><span id="stockHidden">Ocultos: 0</span></div>
-        <div class="inventory-toolbar"><div class="inventory-tabs" role="tablist" aria-label="Tipo de estoque"><button type="button" class="active" role="tab" aria-selected="true" data-stock-kind="all">Todos</button><button type="button" role="tab" aria-selected="false" data-stock-kind="item">Itens</button><button type="button" role="tab" aria-selected="false" data-stock-kind="composition">Composição</button></div><div class="toolbar inventory-filters"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"><select id="stockState"><option value="all">Todos os estados</option><option value="visible">Visíveis</option><option value="finished">Finalizados</option><option value="hidden">Ocultos</option></select></div><select id="stockKind" hidden aria-hidden="true"><option value="all">Todos</option><option value="item">Itens</option><option value="composition">Composição</option></select></div>
+        <div class="inventory-toolbar"><div class="inventory-tabs" role="tablist" aria-label="Tipo de estoque"><button type="button" class="active" role="tab" aria-selected="true" data-stock-kind="item">Itens</button><button type="button" role="tab" aria-selected="false" data-stock-kind="composition">Composição</button><button type="button" role="tab" aria-selected="false" data-stock-kind="all">Todos</button></div><div class="toolbar inventory-filters"><input id="stockSearch" type="search" placeholder="Buscar por nome ou ID"></div></div><select id="stockKind" hidden><option value="item">Itens</option></select>
         <div id="stockList" class="inventory-groups"></div>
+      </section>
+
+      <section id="visibilityView" class="view">
+        <div class="section-heading inventory-heading"><div class="section-copy"><h2>Visibilidade</h2></div><button id="saveAvailability" class="button primary" disabled>Salvar alterações <span id="availabilityChangeCount">(0)</span></button></div>
+        <div class="inventory-toolbar"><div class="inventory-tabs" role="tablist" aria-label="Estado no cardápio"><button type="button" class="active" role="tab" aria-selected="true" data-availability-filter="all">Todos</button><button type="button" role="tab" aria-selected="false" data-availability-filter="active">No cardápio</button><button type="button" role="tab" aria-selected="false" data-availability-filter="archived">Arquivados</button></div><div class="toolbar inventory-filters"><input id="availabilitySearch" type="search" placeholder="Buscar por nome ou ID"></div></div>
+        <div id="availabilityList" class="inventory-groups"></div>
       </section>
 
       <section id="itemsView" class="view">
@@ -161,7 +167,6 @@
       <label>Nome<input id="itemName" required maxlength="100"></label>
       <label>Descrição<textarea id="itemDescription" maxlength="500" rows="3"></textarea></label>
       <label><span id="itemPriceLabel">Preço</span><input id="itemPrice" type="number" min="0" step="0.01" required></label>
-      <label class="check-row"><input id="itemActive" type="checkbox" checked> Ativo no cardápio</label>
       <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><button id="manageItemPhotos" type="button" class="button" hidden>▧ Gerenciar fotos</button><button id="editItemComposition" type="button" class="button" hidden>Editar composição</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
     </form>
   </dialog>
@@ -170,7 +175,7 @@
 
   <dialog id="itemCompositionDialog" class="wide-dialog"><div class="dialog-card wide-card"><input id="compositionItemId" type="hidden"><h2 id="compositionItemTitle">Composição</h2><div id="itemPackageList" class="item-package-list"></div><div class="dialog-actions"><span class="dialog-spacer"></span><button id="closeItemComposition" type="button" class="button">Fechar</button></div></div></dialog>
 
-  <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button class="button primary">Salvar associação</button></div></form></dialog>
+  <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button id="itemGroupManagerConfirm" class="button primary">Salvar associação</button></div></form></dialog>
 
   <dialog id="categoryDialog">
     <form id="categoryForm" class="dialog-card">
@@ -199,6 +204,7 @@
       <label>Modo do grupo<select id="packageKind"><option value="adjustable">Delta — 0, 1 ou 2; não bloqueia o item</option><option value="scalable">Escalável — quantidade conforme limite/estoque</option><option value="decay">Decaimento — uma opção obrigatória por prioridade</option><option value="complementary">Complementar (compatibilidade antiga) — 0 ou 1</option><option value="single_required">Escolha única (compatibilidade antiga)</option></select></label>
       <div class="form-grid"><label>Franquia<select id="packageFranchiseMode"><option value="none">Sem franquia</option><option value="per_component">Individual por componente</option><option value="shared">Compartilhada pelo grupo</option></select></label><span>Na franquia compartilhada, os componentes do grupo devem ter o mesmo preço.</span></div>
       <label class="check-row"><input id="packageSellable" type="checkbox"> Componentes disponíveis como escolhas próprias no carrinho</label>
+      <label class="check-row"><input id="packageShowDefaultsInItem" type="checkbox" checked> Mostrar componentes padrão na descrição do item</label>
       <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
       <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
       <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> O cliente deve manter pelo menos uma opção selecionada</label>
@@ -217,6 +223,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-item-order-mode"></script>
+  <script src="app.js?v=20261010-quantity-visibility-separation"></script>
 </body>
 </html>
