@@ -7,7 +7,9 @@
   const routeView = location.hash.slice(1);
   const savedView = viewNames.includes(routeView) ? routeView : localStorage.getItem("aldoAdminViewV2");
   const savedOrderTab=Number(localStorage.getItem("aldoAdminOrdersTab")||0);
+  const storedOrderScale=Number(localStorage.getItem("aldoAdminOrdersScale")||1);
   const state = {session:null,isAdmin:false,items:[],itemArrivalOrder:new Map(),orderingCategoryId:null,categoryOrderingParentId:null,itemOrderSaving:false,cloneCategoryId:null,itemCloneSource:null,sharedFranchiseConfirmed:false,categories:[],components:[],associations:[],packages:[],packageComponents:[],packagePresentations:[],packageComponentDraft:new Map(),activePackageManagerId:null,activePresentationPackageId:null,itemPackages:[],itemComponentConfigs:[],orders:[],orderLoadRevision:0,candidates:[],liveChannels:[],booting:false,view:viewNames.includes(savedView)?savedView:"home",inventoryDrafts:new Map(),availabilityDrafts:new Map(),orderTab:[-1,0,1,2].includes(savedOrderTab)?savedOrderTab:0,autoAcceptSiteOrders:true};
+  state.orderScale=Number.isFinite(storedOrderScale)?Math.min(1.5,Math.max(.75,storedOrderScale)):1;
   const titles = {home:"Administração",orders:"Pedidos",candidates:"Confirmações IA",stock:"Inventário",visibility:"Visibilidade",items:"Itens",categories:"Categorias",components:"Componentes",customers:"Cadastros",admins:"Administradores"};
   let orderRefreshTimer=null;
   const displayLabels = {lista:"Lista","lista-dupla":"Lista dupla",grade:"Grade",grid:"Grid legado"};
@@ -16,6 +18,10 @@
   const packageAvailabilityLabels={all_positive_defaults_required:"Padrões positivos obrigatórios",one_available_with_priority_fallback:"Obrigatório com prioridade",optional_warn_only:"Opcional com aviso",optional:"Opcional"};
 
   function toast(message,error=false){const el=$("toast");el.textContent=message;el.style.borderColor=error?"var(--red)":"var(--green)";el.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.hidden=true,4200)}
+  function applyOrderScale(){const view=$("ordersView");view.style.setProperty("--orders-scale",String(state.orderScale));$("ordersZoomOut").disabled=state.orderScale<=.75;$("ordersZoomIn").disabled=state.orderScale>=1.5}
+  function changeOrderScale(delta){state.orderScale=Math.min(1.5,Math.max(.75,Math.round((state.orderScale+delta)*100)/100));localStorage.setItem("aldoAdminOrdersScale",String(state.orderScale));applyOrderScale()}
+  function syncOrdersFullscreenButton(){const button=$("ordersFullscreen"),active=document.fullscreenElement===$("ordersView");button.textContent=active?"↙":"⛶";button.title=active?"Sair da tela cheia":"Abrir em tela cheia";button.setAttribute("aria-label",button.title)}
+  async function toggleOrdersFullscreen(){try{if(document.fullscreenElement){await document.exitFullscreen();return}const view=$("ordersView");if(!view.requestFullscreen)throw new Error("Tela cheia não é compatível com este navegador.");await view.requestFullscreen()}catch(error){toast(error.message||"Não foi possível alternar para tela cheia.",true)}}
   function money(value){return Number(value||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
   function orderQuantityBadge(quantity){const count=Math.max(0,Math.trunc(Number(quantity)||0));return count>1?`<span class="item-quantity-badge" data-quantity="${Math.min(count,8)}">${count}</span>`:""}
   function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
@@ -487,6 +493,12 @@
   $("homeView").addEventListener("click",e=>{const tile=e.target.closest("[data-view]");if(tile)switchView(tile.dataset.view)});
   document.addEventListener("click",e=>{const home=e.target.closest(".home-return");if(home)switchView("home")});
   $("ordersRefresh").addEventListener("click",refreshAll);
+  $("ordersZoomOut").addEventListener("click",()=>changeOrderScale(-.1));
+  $("ordersZoomIn").addEventListener("click",()=>changeOrderScale(.1));
+  $("ordersFullscreen").addEventListener("click",toggleOrdersFullscreen);
+  document.addEventListener("fullscreenchange",syncOrdersFullscreenButton);
+  applyOrderScale();
+  syncOrdersFullscreenButton();
   $("deleteAllOrders").addEventListener("click",deleteAllOrders);
   $("ordersTabs").addEventListener("click",e=>{const tab=e.target.closest("[data-order-tab]");if(tab)switchOrderTab(Number(tab.dataset.orderTab))});
   $("orderSettingsOpen").addEventListener("click",()=>$("orderSettingsDialog").showModal());

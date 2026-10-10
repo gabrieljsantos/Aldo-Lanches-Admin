@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261009-24">
+  <link rel="stylesheet" href="styles.css?v=20261010-orders-view-controls">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
   <link rel="stylesheet" href="catalog-packages.css?v=20261010-component-presentation-edit">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
@@ -74,6 +74,11 @@
           <button type="button" role="tab" data-order-tab="0" aria-label="Pedidos ativos" title="Pedidos ativos"><strong>Pedidos</strong><span data-order-count="active">0</span></button>
           <button type="button" role="tab" data-order-tab="1" aria-label="Pedidos em entrega" title="Em entrega"><strong>Em entrega</strong><span data-order-count="delivery">0</span></button>
           <button type="button" role="tab" data-order-tab="2" aria-label="Pedidos entregues" title="Entregues"><strong>Entregues</strong><span data-order-count="delivered">0</span></button>
+          <div class="orders-display-controls" aria-label="Ajustes de visualização">
+            <button id="ordersZoomOut" type="button" aria-label="Diminuir tamanho dos pedidos" title="Diminuir tamanho">A−</button>
+            <button id="ordersZoomIn" type="button" aria-label="Aumentar tamanho dos pedidos" title="Aumentar tamanho">A+</button>
+            <button id="ordersFullscreen" type="button" aria-label="Abrir em tela cheia" title="Abrir em tela cheia">⛶</button>
+          </div>
           <button id="orderSettingsOpen" class="orders-settings-open" type="button" aria-label="Configurar aceitação automática" title="Configurações">⚙</button>
           <button id="deleteAllOrders" class="button danger-button delete-all-orders" type="button" title="Apagar todos os pedidos registrados">Apagar todos</button>
         </nav>
@@ -225,6 +230,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-order-component-quantity-badge"></script>
+  <script src="app.js?v=20261010-orders-view-controls"></script>
 </body>
 </html>
