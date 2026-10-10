@@ -57,4 +57,7 @@
 .orders-tabs .orders-back{height:36px;min-width:0;margin-right:8px;padding:0 12px;border:0;border-radius:10px;background:#243b53;color:#fff;font-size:.86rem;font-weight:800;white-space:nowrap}
 .orders-tabs .orders-back:hover{background:#172b40}
 .orders-tabs .orders-settings-open{margin-left:auto}
+.orders-tabs .delete-all-orders{min-height:36px;padding:0 12px;border:1px solid #fecaca;border-radius:10px;background:#fff1f2;color:#b42318;font-size:.82rem;font-weight:700;white-space:nowrap}
+.orders-tabs .delete-all-orders:hover{border-color:#ef4444;background:#fee2e2}
+.orders-tabs .delete-all-orders:disabled{opacity:.55;cursor:wait}
 @media(max-width:850px){.orders-tabs{position:sticky;top:0;z-index:5;overflow-x:auto;flex:0 0 auto;max-width:100%;border-radius:12px}.orders-tabs .orders-back{position:sticky;left:0;z-index:1}}

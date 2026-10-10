@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261009-24">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261010-root-catalog-toolbar">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261010-component-presentation-edit">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -75,6 +75,7 @@
           <button type="button" role="tab" data-order-tab="1" aria-label="Pedidos em entrega" title="Em entrega"><strong>Em entrega</strong><span data-order-count="delivery">0</span></button>
           <button type="button" role="tab" data-order-tab="2" aria-label="Pedidos entregues" title="Entregues"><strong>Entregues</strong><span data-order-count="delivered">0</span></button>
           <button id="orderSettingsOpen" class="orders-settings-open" type="button" aria-label="Configurar aceitação automática" title="Configurações">⚙</button>
+          <button id="deleteAllOrders" class="button danger-button delete-all-orders" type="button" title="Apagar todos os pedidos registrados">Apagar todos</button>
         </nav>
         <div class="orders-layout">
           <section class="orders-primary-panel">
@@ -224,6 +225,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-root-catalog-toolbar"></script>
+  <script src="app.js?v=20261010-component-presentation-edit"></script>
 </body>
 </html>

@@ -99,6 +99,8 @@
 .component-presentation-source{display:grid;gap:4px}.component-presentation-source small{color:var(--muted)}
 .component-presentation-card>img,.component-presentation-card>.item-placeholder{width:78px;height:78px;object-fit:cover;border-radius:12px}
 .component-presentation-card .menu-item-copy{min-width:0}.component-presentation-card .menu-item-title{display:flex;justify-content:space-between;gap:8px}.component-presentation-card .menu-item-copy>p:empty{display:none}
+.component-presentation-card>.button{right:10px;bottom:10px;min-height:34px;padding:.4rem .65rem;font-size:.8rem}
+.component-presentation-card .menu-item-copy{padding-bottom:38px}
 .menu-category.is-ordering-items>.menu-items{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 .menu-item-card.item-order-card,.menu-item-card.item-order-card.composed-item-card{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto;align-items:center;min-height:58px;padding:8px 12px;gap:10px}
 .item-order-summary{display:flex;align-items:center;gap:10px;min-width:0}
