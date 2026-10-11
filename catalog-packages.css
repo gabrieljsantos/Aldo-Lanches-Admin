@@ -149,6 +149,7 @@ input[type=number]:disabled{background:#edf1f5;color:#526273;opacity:1}
 .bulk-profile-controls select{min-width:150px;min-height:38px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px 9px;color:var(--ink);font:inherit}
 .bulk-profile-controls .check-row{font-size:.78rem;white-space:nowrap}
 .bulk-profile-selection-count{white-space:nowrap;color:#536476;font-size:.79rem;font-weight:750}
+.bulk-profile-help{flex:1 0 100%;color:var(--muted);font-size:.78rem}
 .items-selection-mode .toolbar select{display:none}
 .items-selection-mode .menu-category.is-bulk-item-selection>.menu-items{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 .menu-item-card.item-select-card{display:flex;align-items:center;min-height:58px;padding:8px 12px;cursor:pointer}
