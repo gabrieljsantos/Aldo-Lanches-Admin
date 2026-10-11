@@ -55,3 +55,7 @@
 @media(max-width:620px){.group-profiles-heading{display:grid}.group-profiles-counts{justify-content:flex-start}.group-profile-facts{display:grid;gap:4px}}
 .profile-category-help{margin:-8px 0 2px;color:var(--muted);font-size:.82rem;line-height:1.5}
 .profile-category-description{align-self:end;min-height:44px}
+/* Deixa quantidades e valores numéricos legíveis em todos os formulários do Admin. */
+input[type="number"]{min-height:40px;color:#182b3d;font-weight:750;font-variant-numeric:tabular-nums;background:#fff;border-color:#a9b8c7}
+input[type="number"]:focus{border-color:#c94e06;box-shadow:0 0 0 3px #f9731630}
+input[type="number"]:disabled{background:#edf1f5;color:#526273;opacity:1}
