@@ -130,8 +130,20 @@ input[type=number]:disabled{background:#edf1f5;color:#526273;opacity:1}
 .category-association-profile-row>label:not(.check-row){display:grid;gap:4px;color:var(--muted);font-size:.78rem}
 .category-association-profile-row select{width:100%;min-width:0;min-height:40px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px;color:var(--ink);font:inherit}
 .category-association-profile-row .check-row{white-space:nowrap;font-size:.78rem}
+.bulk-profile-tools{display:flex;flex-wrap:wrap;gap:8px}
+.bulk-profile-tools input{flex:1 1 220px;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;color:var(--ink)}
+.bulk-profile-selection-count{margin:0;color:var(--muted);font-size:.86rem;font-weight:700}
+.bulk-profile-items{display:grid;gap:6px;max-height:48vh;overflow:auto;padding:2px}
+.bulk-profile-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}
+.bulk-profile-item>input{width:18px;height:18px;accent-color:var(--primary);flex:none}
+.bulk-profile-item>span{display:grid;gap:3px;min-width:0}
+.bulk-profile-item strong{color:var(--ink);font-size:.91rem}
+.bulk-profile-item small{color:var(--muted);font-size:.77rem}
+.bulk-profile-item.is-conflict{background:#fff8f5;border-color:#edc7b7;cursor:not-allowed}
+.bulk-profile-item.is-conflict>span small{color:#9d3e21}
 @media(max-width:650px){.component-admin-tabs{overflow-x:auto}.component-profiles-panel .section-heading{align-items:flex-start;flex-direction:column}.association-profile-metadata{display:grid}.association-profile-card>.actions>.button{flex:1 1 145px}}
 @media(max-width:700px){.category-association-profile-row{grid-template-columns:1fr}.category-association-profile-row .check-row{white-space:normal}}
+@media(max-width:650px){#itemsView>.section-heading{align-items:flex-start;flex-direction:column}#itemsView>.section-heading>.actions{width:100%;flex-wrap:wrap}#itemsView>.section-heading>.actions>.button{flex:1 1 180px}.bulk-profile-tools>.button{flex:1 1 auto}}
 .component-presentations-list{display:grid;gap:10px;max-height:66vh;overflow:auto}
 .component-presentation-edit-row{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(150px,1fr) minmax(180px,1.4fr) minmax(170px,1.2fr) auto;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .component-presentation-edit-row>label{display:grid;gap:5px;color:var(--muted);font-size:.76rem}
