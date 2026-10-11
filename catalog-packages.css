@@ -141,9 +141,27 @@ input[type=number]:disabled{background:#edf1f5;color:#526273;opacity:1}
 .bulk-profile-item small{color:var(--muted);font-size:.77rem}
 .bulk-profile-item.is-conflict{background:#fff8f5;border-color:#edc7b7;cursor:not-allowed}
 .bulk-profile-item.is-conflict>span small{color:#9d3e21}
+.items-heading{align-items:flex-start}
+.items-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap;min-width:0}
+.bulk-profile-controls{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;padding:10px;border:1px solid #f2b27e;border-radius:12px;background:#fff8f1}
+.bulk-profile-controls[hidden]{display:none}
+.bulk-profile-controls>label:not(.check-row){display:grid;gap:4px;color:var(--muted);font-size:.75rem}
+.bulk-profile-controls select{min-width:150px;min-height:38px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px 9px;color:var(--ink);font:inherit}
+.bulk-profile-controls .check-row{font-size:.78rem;white-space:nowrap}
+.bulk-profile-selection-count{white-space:nowrap;color:#536476;font-size:.79rem;font-weight:750}
+.items-selection-mode .toolbar select{display:none}
+.items-selection-mode .menu-category.is-bulk-item-selection>.menu-items{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.menu-item-card.item-select-card{display:flex;align-items:center;min-height:58px;padding:8px 12px;cursor:pointer}
+.item-select-card>label{display:flex;align-items:center;gap:11px;width:100%;min-width:0;cursor:pointer}
+.item-select-card input[type=checkbox]{width:19px;height:19px;margin:0;accent-color:var(--primary);flex:none}
+.item-select-card strong{min-width:0;color:#273444;font-size:.91rem;font-weight:700;overflow-wrap:anywhere}
+.item-select-card.is-selected{border-color:#ed9a54;background:#fff7ef;box-shadow:0 0 0 2px #f9731620}
+.item-select-card.has-profile-conflict{border-color:#e7c4b7;background:#fff9f6}
+.item-select-card.has-profile-conflict small{margin-left:auto;color:#9d3e21;font-size:.72rem}
 @media(max-width:650px){.component-admin-tabs{overflow-x:auto}.component-profiles-panel .section-heading{align-items:flex-start;flex-direction:column}.association-profile-metadata{display:grid}.association-profile-card>.actions>.button{flex:1 1 145px}}
 @media(max-width:700px){.category-association-profile-row{grid-template-columns:1fr}.category-association-profile-row .check-row{white-space:normal}}
-@media(max-width:650px){#itemsView>.section-heading{align-items:flex-start;flex-direction:column}#itemsView>.section-heading>.actions{width:100%;flex-wrap:wrap}#itemsView>.section-heading>.actions>.button{flex:1 1 180px}.bulk-profile-tools>.button{flex:1 1 auto}}
+@media(max-width:650px){#itemsView>.section-heading{align-items:flex-start;flex-direction:column}#itemsView>.section-heading>.items-heading-actions{width:100%;justify-content:flex-start}.items-heading-actions>.button{flex:1 1 180px}}
+@media(max-width:760px){.items-heading-actions{width:100%;justify-content:flex-start}.bulk-profile-controls{width:100%}.bulk-profile-controls>label:not(.check-row){flex:1 1 160px}.bulk-profile-controls>button{flex:1 1 auto}.items-selection-mode .menu-category.is-bulk-item-selection>.menu-items{grid-template-columns:repeat(auto-fill,minmax(175px,1fr))}}
 .component-presentations-list{display:grid;gap:10px;max-height:66vh;overflow:auto}
 .component-presentation-edit-row{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(150px,1fr) minmax(180px,1.4fr) minmax(170px,1.2fr) auto;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .component-presentation-edit-row>label{display:grid;gap:5px;color:var(--muted);font-size:.76rem}

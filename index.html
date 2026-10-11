@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261011-component-input-contrast">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261011-bulk-profile-item-selection">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261011-inline-profile-selection">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -127,7 +127,7 @@
       </section>
 
       <section id="itemsView" class="view">
-        <div class="section-heading"><div class="section-copy"><h2>Itens do cardápio</h2><p>Produtos organizados pela árvore de categorias.</p></div><div class="actions"><button id="bulkAssociateProfile" type="button" class="button">Associar perfil por seleção</button><button id="newItem" class="button primary">Novo item</button></div></div>
+        <div class="section-heading items-heading"><div class="section-copy"><h2>Itens do cardápio</h2><p>Produtos organizados pela árvore de categorias.</p></div><div class="items-heading-actions"><div id="bulkProfileControls" class="bulk-profile-controls" hidden><label>Perfil vendável<select id="bulkProfileSelect"><option value="">Escolha um perfil</option></select></label><label>Exibição no carrinho<select id="bulkProfilePresentation"><option value="explicit">Explícita · opções abertas</option><option value="minimized">Implícita · grupo recolhido</option></select></label><label class="check-row"><input id="bulkProfileDescription" type="checkbox" checked> Mostrar na descrição</label><button id="bulkProfileSelectAll" type="button" class="button">Selecionar todos</button><button id="bulkProfileClear" type="button" class="button">Limpar seleção</button><span id="bulkProfileSelectionCount" class="bulk-profile-selection-count">0 selecionados</span><button id="cancelBulkProfileAssociation" type="button" class="button">Cancelar</button><button id="saveBulkProfileAssociation" type="button" class="button primary" disabled>Concluir</button></div><button id="bulkAssociateProfile" type="button" class="button">Associar perfil por seleção</button><button id="newItem" class="button primary">Novo item</button></div></div>
         <div class="toolbar"><input id="itemSearch" type="search" placeholder="Buscar item"><select id="itemCategoryFilter"><option value="all">Todas as categorias</option></select></div>
         <div id="itemList" class="catalog-sections"></div>
       </section>
@@ -194,7 +194,6 @@
 
   <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button id="itemGroupManagerConfirm" class="button primary">Salvar associação</button></div></form></dialog>
 
-  <dialog id="bulkProfileAssociationDialog" class="wide-dialog"><form id="bulkProfileAssociationForm" class="dialog-card wide-card"><h2>Associar perfil aos itens</h2><label>Perfil vendável<select id="bulkProfileSelect" required><option value="">Escolha um perfil</option></select></label><div class="form-grid"><label>Exibição no carrinho<select id="bulkProfilePresentation"><option value="explicit">Explícita · opções abertas</option><option value="minimized" selected>Implícita · grupo recolhido</option></select></label><label class="check-row"><input id="bulkProfileDescription" type="checkbox" checked> Mostrar na descrição do item</label></div><div class="bulk-profile-tools"><input id="bulkProfileSearch" type="search" placeholder="Buscar item ou categoria"><button id="bulkProfileSelectVisible" type="button" class="button">Selecionar itens visíveis</button><button id="bulkProfileClear" type="button" class="button">Limpar seleção</button></div><p id="bulkProfileSelectionCount" class="bulk-profile-selection-count">Escolha um perfil para listar os itens.</p><div id="bulkProfileItems" class="bulk-profile-items"></div><div class="dialog-actions"><button id="cancelBulkProfileAssociation" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button id="saveBulkProfileAssociation" class="button primary" disabled>Associar aos itens selecionados</button></div></form></dialog>
 
   <dialog id="categoryDialog" class="wide-dialog">
     <form id="categoryForm" class="dialog-card wide-card">
@@ -245,6 +244,6 @@
   </dialog>
 
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261011-bulk-profile-item-selection"></script>
+  <script src="app.js?v=20261011-inline-profile-selection"></script>
 </body>
 </html>
