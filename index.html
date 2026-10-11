@@ -138,7 +138,7 @@
       </section>
 
       <section id="componentsView" class="view">
-        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2></div><div class="actions"><button id="newPackage" class="button primary">Novo grupo</button></div></div>
+        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2><p>Grupos de composição e grupos vendáveis são cadastros separados.</p></div><div class="actions"><button id="manageAssociationProfiles" class="button">Perfis de associação</button><button id="newCompositionPackage" class="button">Novo grupo de composição</button><button id="newSellablePackage" class="button primary">Novo grupo vendável</button></div></div>
         <div class="toolbar"><input id="componentSearch" type="search" placeholder="Buscar componente"></div>
         <div id="componentList" class="component-group-tree"></div>
       </section>
@@ -174,7 +174,7 @@
       <label>Nome<input id="itemName" required maxlength="100"></label>
       <label>Descrição<textarea id="itemDescription" maxlength="500" rows="3"></textarea></label>
       <label><span id="itemPriceLabel">Preço</span><input id="itemPrice" type="number" min="0" step="0.01" required></label>
-      <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><button id="manageItemPhotos" type="button" class="button" hidden>▧ Gerenciar fotos</button><button id="editItemComposition" type="button" class="button" hidden>Editar composição</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
+      <div class="dialog-actions"><button id="deleteItem" type="button" class="button danger-button" hidden>Excluir item</button><button id="manageItemPhotos" type="button" class="button" hidden>▧ Gerenciar fotos</button><button id="editItemComposition" type="button" class="button" hidden>Gerenciar grupos</button><span class="dialog-spacer"></span><button id="cancelItem" type="button" class="button">Cancelar</button><button class="button primary">Salvar item</button></div>
     </form>
   </dialog>
 
@@ -190,7 +190,7 @@
       <label>Nome<input id="categoryName" required maxlength="100"></label>
       <label>Categoria pai<select id="categoryParent"><option value="">Raiz</option></select></label>
       <label>Modo de exibição<select id="categoryDisplay"><option value="lista">Lista</option><option value="lista-dupla">Lista dupla</option><option value="grade">Grade</option><option value="grid">Grid legado</option></select></label>
-      <label>Conteúdo<select id="categoryComponentPackage"><option value="">Itens do cardápio</option></select></label>
+      <input id="categoryComponentPackage" type="hidden" value="">
       <label>Prioridade<input id="categoryPriority" type="number" step="1" value="0"></label>
       <div class="dialog-actions"><button id="deleteCategory" type="button" class="button danger-button" hidden>Excluir categoria</button><span class="dialog-spacer"></span><button id="cancelCategory" type="button" class="button">Cancelar</button><button class="button primary">Salvar categoria</button></div>
     </form>
@@ -210,7 +210,6 @@
       <div class="form-grid"><label>Nome interno (só você)<input id="packageName" required maxlength="100" placeholder="Opções principais obrigatórias"></label><label>Nome no cardápio (cliente)<input id="packageCustomerName" required maxlength="100" placeholder="Recheios"></label></div>
       <label>Modo do grupo<select id="packageKind"><option value="adjustable">Delta — 0, 1 ou 2; não bloqueia o item</option><option value="scalable">Escalável — quantidade conforme limite/estoque</option><option value="decay">Decaimento — uma opção obrigatória por prioridade</option><option value="complementary">Complementar (compatibilidade antiga) — 0 ou 1</option><option value="single_required">Escolha única (compatibilidade antiga)</option></select></label>
       <div class="form-grid"><label>Franquia<select id="packageFranchiseMode"><option value="none">Sem franquia</option><option value="per_component">Individual por componente</option><option value="shared">Compartilhada pelo grupo</option></select></label><span>Na franquia compartilhada, os componentes do grupo devem ter o mesmo preço.</span></div>
-      <label class="check-row"><input id="packageSellable" type="checkbox"> Componentes disponíveis como escolhas próprias no carrinho</label>
       <label class="check-row"><input id="packageShowDefaultsInItem" type="checkbox" checked> Mostrar componentes padrão na descrição do item</label>
       <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
       <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
@@ -224,12 +223,26 @@
   <dialog id="groupComponentsDialog" class="wide-dialog">
     <form id="groupComponentsForm" class="dialog-card wide-card">
       <input id="groupComponentsPackageId" type="hidden"><h2 id="groupComponentsTitle">Gerenciar este grupo</h2>
-      <div class="group-component-table-wrap"><div class="group-component-table-head"><span>Nome</span><span>Preço</span><span>Franquia grátis</span><span>Limite</span><span>Prioridade</span><span></span></div><div id="groupComponentsList" class="group-components-list"></div><button id="addGroupComponent" type="button" class="button">+ Linha</button></div>
+      <div class="group-component-table-wrap"><div class="group-component-table-head"><span>Nome</span><span>Preço</span><span id="groupComponentAllowanceHeading">Franquia grátis</span><span>Limite</span><span>Prioridade</span><span></span></div><div id="groupComponentsList" class="group-components-list"></div><button id="addGroupComponent" type="button" class="button">+ Linha</button></div>
       <div class="dialog-actions"><span class="dialog-spacer"></span><button id="cancelGroupComponents" type="button" class="button">Cancelar</button><button class="button primary">Salvar componentes</button></div>
     </form>
   </dialog>
 
+  <dialog id="associationProfilesDialog" class="wide-dialog"><div class="dialog-card wide-card"><h2>Perfis de associação</h2><div id="associationProfilesList" class="component-group-tree"></div><div class="dialog-actions"><button type="button" id="closeAssociationProfiles" class="button">Fechar</button><span class="dialog-spacer"></span><button type="button" id="newAssociationProfile" class="button primary">Novo perfil</button></div></div></dialog>
+
+  <dialog id="associationProfileDialog" class="wide-dialog">
+    <form id="associationProfileForm" class="dialog-card wide-card">
+      <input id="associationProfileId" type="hidden">
+      <h2 id="associationProfileTitle">Perfil de associação</h2>
+      <div class="form-grid"><label>Grupo vendável<select id="associationProfilePackage" required></select></label><label>Nome do perfil<input id="associationProfileName" required maxlength="100" placeholder="Pastel padrão"></label></div>
+      <label>Franquia em créditos<input id="associationProfileAllowance" type="number" min="0" step="any" value="0" required></label>
+      <p>Os pesos de crédito são configurados por componente no grupo. O perfil guarda a franquia e as quantidades padrão inteiras.</p>
+      <div id="associationProfileComponents" class="item-group-manager-list"></div>
+      <div class="dialog-actions"><button id="deleteAssociationProfile" type="button" class="button danger-button" hidden>Excluir perfil</button><span class="dialog-spacer"></span><button id="cancelAssociationProfile" type="button" class="button">Cancelar</button><button class="button primary">Salvar perfil</button></div>
+    </form>
+  </dialog>
+
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261010-orders-view-controls"></script>
+  <script src="app.js?v=20261011-profile-links"></script>
 </body>
 </html>
