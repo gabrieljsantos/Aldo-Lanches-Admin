@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261011-component-input-contrast">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261011-component-input-contrast">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261011-association-profile-category-tab">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -138,9 +138,19 @@
       </section>
 
       <section id="componentsView" class="view">
-        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2><p>Grupos de composição e grupos de composição vendáveis são cadastros separados; associe vendáveis aos itens por um perfil.</p></div><div class="actions"><button id="manageAssociationProfiles" class="button">Perfis de associação</button><button id="newCompositionPackage" class="button">Novo grupo de composição</button><button id="newSellablePackage" class="button primary">Novo grupo de composição vendável</button></div></div>
-        <div class="toolbar"><input id="componentSearch" type="search" placeholder="Buscar componente"></div>
-        <div id="componentList" class="component-group-tree"></div>
+        <div class="section-heading"><div class="section-copy"><h2>Componentes</h2><p>Grupos de composição e grupos vendáveis são cadastros separados. Os perfis vendáveis podem ser associados às categorias.</p></div><div class="actions"><button id="newCompositionPackage" class="button">Novo grupo de composição</button><button id="newSellablePackage" class="button primary">Novo grupo vendável</button></div></div>
+        <div id="componentGroupsPanel" class="component-admin-panel">
+          <div class="toolbar"><input id="componentSearch" type="search" placeholder="Buscar componente"></div>
+          <div id="componentList" class="component-group-tree"></div>
+        </div>
+        <div class="component-admin-tabs" role="tablist" aria-label="Seções de componentes">
+          <button type="button" role="tab" class="active" aria-selected="true" data-component-admin-tab="groups">Grupos de componentes</button>
+          <button type="button" role="tab" aria-selected="false" data-component-admin-tab="profiles">Perfis de associação</button>
+        </div>
+        <section id="componentProfilesPanel" class="component-profiles-panel" hidden>
+          <div class="section-heading"><div class="section-copy"><h3>Perfis de associação</h3><p>Veja os perfis vendáveis, seus padrões, estado, categoria e itens vinculados. Abra um perfil para editar ou crie o vínculo dele com uma categoria.</p></div><button id="newAssociationProfile" type="button" class="button primary">Novo perfil</button></div>
+          <div id="associationProfilesList" class="component-association-profiles-list"></div>
+        </section>
       </section>
 
       <section id="adminsView" class="view">
@@ -216,15 +226,9 @@
     <form id="groupComponentsForm" class="dialog-card wide-card">
       <input id="groupComponentsPackageId" type="hidden"><h2 id="groupComponentsTitle">Gerenciar este grupo</h2>
       <div class="group-component-table-wrap"><div class="group-component-table-head"><span>Nome</span><span>Preço</span><span id="groupComponentAllowanceHeading">Franquia grátis</span><span>Limite</span><span>Prioridade</span><span></span></div><div id="groupComponentsList" class="group-components-list"></div><button id="addGroupComponent" type="button" class="button">+ Linha</button></div>
-      <section class="group-profiles-panel" aria-labelledby="groupProfilesTitle">
-        <div class="group-profiles-heading"><div><h3 id="groupProfilesTitle">Perfis de associação</h3><p>Veja a franquia, os padrões e quantos itens usam cada perfil deste grupo.</p></div><div id="groupProfilesCounts" class="group-profiles-counts"></div></div>
-        <div id="groupAssociationProfiles" class="group-association-profiles" aria-live="polite"></div>
-      </section>
       <div class="dialog-actions"><span class="dialog-spacer"></span><button id="cancelGroupComponents" type="button" class="button">Cancelar</button><button class="button primary">Salvar componentes</button></div>
     </form>
   </dialog>
-
-  <dialog id="associationProfilesDialog" class="wide-dialog"><div class="dialog-card wide-card"><h2>Perfis de associação</h2><div id="associationProfilesList" class="component-group-tree"></div><div class="dialog-actions"><button type="button" id="closeAssociationProfiles" class="button">Fechar</button><span class="dialog-spacer"></span><button type="button" id="newAssociationProfile" class="button primary">Novo perfil</button></div></div></dialog>
 
   <dialog id="associationProfileDialog" class="wide-dialog">
     <form id="associationProfileForm" class="dialog-card wide-card">
@@ -232,16 +236,25 @@
       <h2 id="associationProfileTitle">Perfil de associação</h2>
       <div class="form-grid"><label>Grupo vendável<select id="associationProfilePackage" required></select></label><label>Nome do perfil<input id="associationProfileName" required maxlength="100" placeholder="Pastel padrão"></label></div>
       <label>Franquia em créditos<input id="associationProfileAllowance" type="number" min="0" step="any" value="0" required></label>
-      <p>Os pesos de crédito são configurados por componente no grupo. O perfil guarda a franquia e as quantidades padrão inteiras.</p>
-      <label>Aplicar automaticamente aos itens diretos desta categoria<select id="associationProfileCategory"><option value="">Não aplicar a uma categoria</option></select></label>
-      <p class="profile-category-help">A associação alcança somente os itens diretamente dentro da categoria. Itens de subcategorias ficam independentes e podem receber outro perfil.</p>
-      <div class="form-grid"><label>Exibição no carrinho<select id="associationProfilePresentation"><option value="explicit">Explícita · opções abertas</option><option value="minimized">Implícita · grupo recolhido</option></select></label><label class="check-row profile-category-description"><input id="associationProfileShowDescription" type="checkbox" checked> Mostrar grupo na descrição do item</label></div>
+      <p>Os pesos de crédito são configurados por componente no grupo. O perfil guarda a franquia e as quantidades padrão inteiras. A categoria e a exibição são vinculadas pela aba “Perfis de associação”.</p>
       <div id="associationProfileComponents" class="item-group-manager-list"></div>
       <div class="dialog-actions"><button id="deleteAssociationProfile" type="button" class="button danger-button" hidden>Excluir perfil</button><span class="dialog-spacer"></span><button id="cancelAssociationProfile" type="button" class="button">Cancelar</button><button class="button primary">Salvar perfil</button></div>
     </form>
   </dialog>
 
+  <dialog id="categoryAssociationProfileDialog" class="wide-dialog">
+    <form id="categoryAssociationProfileForm" class="dialog-card wide-card">
+      <input id="categoryAssociationProfileId" type="hidden">
+      <h2 id="categoryAssociationProfileTitle">Associar perfil à categoria</h2>
+      <p id="categoryAssociationProfileSummary" class="profile-category-help"></p>
+      <label>Categoria<select id="categoryAssociationCategory" required></select></label>
+      <p class="profile-category-help">O perfil será aplicado aos itens diretamente nesta categoria. Subcategorias não herdam o vínculo.</p>
+      <div class="form-grid"><label>Exibição no carrinho<select id="categoryAssociationPresentation"><option value="explicit">Explícita · opções abertas</option><option value="minimized">Implícita · grupo recolhido</option></select></label><label class="check-row"><input id="categoryAssociationShowDescription" type="checkbox" checked> Mostrar grupo na descrição do item</label></div>
+      <div class="dialog-actions"><button id="removeCategoryAssociation" type="button" class="button danger-button" hidden>Desassociar categoria</button><span class="dialog-spacer"></span><button id="cancelCategoryAssociation" type="button" class="button">Cancelar</button><button class="button primary">Salvar associação</button></div>
+    </form>
+  </dialog>
+
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261011-category-profile-assignment"></script>
+  <script src="app.js?v=20261011-association-profile-category-tab"></script>
 </body>
 </html>
