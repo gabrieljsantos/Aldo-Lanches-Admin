@@ -121,7 +121,17 @@ input[type=number]:disabled{background:#edf1f5;color:#526273;opacity:1}
 .association-profile-defaults li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #edf1f4;color:#526273;font-size:.8rem}
 .association-profile-defaults li strong{color:#26384a}
 .association-profile-card>.actions{margin-top:0}
+.category-association-profiles{display:grid;gap:8px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#f7f9fb}
+.category-association-profiles h3{margin:0;color:#1d3557;font-size:1rem}
+.category-association-profiles>p{margin:0;color:var(--muted);font-size:.84rem}
+.category-association-profiles-list{display:grid;gap:8px;max-height:42vh;overflow:auto}
+.category-association-profile-row{display:grid;grid-template-columns:minmax(120px,.8fr) minmax(150px,1fr) minmax(190px,1.2fr) auto;align-items:end;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.category-association-profile-name{display:grid;gap:4px;align-self:center}.category-association-profile-name strong{color:#26384a}.category-association-profile-name small,.category-association-empty{color:var(--muted)}
+.category-association-profile-row>label:not(.check-row){display:grid;gap:4px;color:var(--muted);font-size:.78rem}
+.category-association-profile-row select{width:100%;min-width:0;min-height:40px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px;color:var(--ink);font:inherit}
+.category-association-profile-row .check-row{white-space:nowrap;font-size:.78rem}
 @media(max-width:650px){.component-admin-tabs{overflow-x:auto}.component-profiles-panel .section-heading{align-items:flex-start;flex-direction:column}.association-profile-metadata{display:grid}.association-profile-card>.actions>.button{flex:1 1 145px}}
+@media(max-width:700px){.category-association-profile-row{grid-template-columns:1fr}.category-association-profile-row .check-row{white-space:normal}}
 .component-presentations-list{display:grid;gap:10px;max-height:66vh;overflow:auto}
 .component-presentation-edit-row{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(150px,1fr) minmax(180px,1.4fr) minmax(170px,1.2fr) auto;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .component-presentation-edit-row>label{display:grid;gap:5px;color:var(--muted);font-size:.76rem}

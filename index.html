@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20261011-component-input-contrast">
   <link rel="stylesheet" href="orders-enhancements.css?v=20261010-tabs-back">
-  <link rel="stylesheet" href="catalog-packages.css?v=20261011-association-profile-category-tab">
+  <link rel="stylesheet" href="catalog-packages.css?v=20261011-category-profile-picker">
   <link rel="stylesheet" href="inventory.css?v=20261010-quantity-visibility">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -194,13 +194,14 @@
 
   <dialog id="itemGroupManagerDialog" class="wide-dialog"><form id="itemGroupManagerForm" class="dialog-card wide-card"><input id="managedItemPackageId" type="hidden"><h2 id="itemGroupManagerTitle">Gerenciar associação</h2><div id="itemGroupManagerSummary" class="association-summary"></div><div id="itemGroupManagerList" class="item-group-manager-list"></div><div class="dialog-actions"><button id="cancelItemGroupManager" type="button" class="button">Cancelar</button><span class="dialog-spacer"></span><button id="itemGroupManagerConfirm" class="button primary">Salvar associação</button></div></form></dialog>
 
-  <dialog id="categoryDialog">
-    <form id="categoryForm" class="dialog-card">
+  <dialog id="categoryDialog" class="wide-dialog">
+    <form id="categoryForm" class="dialog-card wide-card">
       <input id="categoryId" type="hidden"><h2 id="categoryDialogTitle">Categoria</h2>
       <label>Nome<input id="categoryName" required maxlength="100"></label>
       <label>Categoria pai<select id="categoryParent"><option value="">Raiz</option></select></label>
       <label>Modo de exibição<select id="categoryDisplay"><option value="lista">Lista</option><option value="lista-dupla">Lista dupla</option><option value="grade">Grade</option><option value="grid">Grid legado</option></select></label>
       <input id="categoryComponentPackage" type="hidden" value="">
+      <section class="category-association-profiles"><h3>Perfis de componentes vendáveis</h3><p>Escolha um perfil para cada grupo. O vínculo vale para os itens diretamente nesta categoria; subcategorias não herdam.</p><div id="categoryAssociationProfilesList" class="category-association-profiles-list"></div></section>
       <label>Prioridade<input id="categoryPriority" type="number" step="1" value="0"></label>
       <div class="dialog-actions"><button id="deleteCategory" type="button" class="button danger-button" hidden>Excluir categoria</button><span class="dialog-spacer"></span><button id="cancelCategory" type="button" class="button">Cancelar</button><button class="button primary">Salvar categoria</button></div>
     </form>
@@ -236,25 +237,13 @@
       <h2 id="associationProfileTitle">Perfil de associação</h2>
       <div class="form-grid"><label>Grupo vendável<select id="associationProfilePackage" required></select></label><label>Nome do perfil<input id="associationProfileName" required maxlength="100" placeholder="Pastel padrão"></label></div>
       <label>Franquia em créditos<input id="associationProfileAllowance" type="number" min="0" step="any" value="0" required></label>
-      <p>Os pesos de crédito são configurados por componente no grupo. O perfil guarda a franquia e as quantidades padrão inteiras. A categoria e a exibição são vinculadas pela aba “Perfis de associação”.</p>
+      <p>Os pesos de crédito são configurados por componente no grupo. O perfil guarda a franquia e as quantidades padrão inteiras. Associe o perfil pelo formulário de edição da categoria.</p>
       <div id="associationProfileComponents" class="item-group-manager-list"></div>
       <div class="dialog-actions"><button id="deleteAssociationProfile" type="button" class="button danger-button" hidden>Excluir perfil</button><span class="dialog-spacer"></span><button id="cancelAssociationProfile" type="button" class="button">Cancelar</button><button class="button primary">Salvar perfil</button></div>
     </form>
   </dialog>
 
-  <dialog id="categoryAssociationProfileDialog" class="wide-dialog">
-    <form id="categoryAssociationProfileForm" class="dialog-card wide-card">
-      <input id="categoryAssociationProfileId" type="hidden">
-      <h2 id="categoryAssociationProfileTitle">Associar perfil à categoria</h2>
-      <p id="categoryAssociationProfileSummary" class="profile-category-help"></p>
-      <label>Categoria<select id="categoryAssociationCategory" required></select></label>
-      <p class="profile-category-help">O perfil será aplicado aos itens diretamente nesta categoria. Subcategorias não herdam o vínculo.</p>
-      <div class="form-grid"><label>Exibição no carrinho<select id="categoryAssociationPresentation"><option value="explicit">Explícita · opções abertas</option><option value="minimized">Implícita · grupo recolhido</option></select></label><label class="check-row"><input id="categoryAssociationShowDescription" type="checkbox" checked> Mostrar grupo na descrição do item</label></div>
-      <div class="dialog-actions"><button id="removeCategoryAssociation" type="button" class="button danger-button" hidden>Desassociar categoria</button><span class="dialog-spacer"></span><button id="cancelCategoryAssociation" type="button" class="button">Cancelar</button><button class="button primary">Salvar associação</button></div>
-    </form>
-  </dialog>
-
   <script src="config.js?v=20261004-3"></script>
-  <script src="app.js?v=20261011-association-profile-category-tab"></script>
+  <script src="app.js?v=20261011-category-profile-picker"></script>
 </body>
 </html>
