@@ -55,6 +55,11 @@
     }catch(error){toast(`Não foi possível apagar os pedidos: ${error.message}`,true)}
     finally{button.disabled=false}
   }
+  function orderChangeMarkup(text,kind){
+    const match=String(text).match(/^((?:Adicionar|Remover)\s+)(\d+)\s*[x×]\s*(.*)$/i);
+    const content=match?`${escapeHtml(match[1].trim())} ${orderQuantityBadge(match[2])}<span>${escapeHtml(match[3])}</span>`:escapeHtml(text);
+    return `<span class="order-change-chip ${kind}">${content}</span>`;
+  }
   function orderItemMarkup(item,expanded=false){
     const catalogItem=state.items.find(entry=>String(entry.id)===String(item.catalog_item_id||item.item_id))||state.items.find(entry=>entry.name?.trim().toLocaleLowerCase()===String(item.item_name||item.name||"").trim().toLocaleLowerCase());
     const photo=catalogItem?.photo_url_1||catalogItem?.photo_url_2||catalogItem?.photo_url_3;
@@ -64,7 +69,7 @@
     let changes=String(optionsText).split("|").map(part=>part.trim()).filter(Boolean).map(text=>{
       const normalized=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase();
       const kind=/^remover\b/.test(normalized)?"remove":/^adicionar\b/.test(normalized)?"add":"other";
-      return `<span class="order-change-chip ${kind}">${escapeHtml(text)}</span>`;
+      return orderChangeMarkup(text,kind);
     });
     if(!changes.length)changes=(item.order_item_components||[]).filter(component=>{
       const selected=Number(component.snapshot?.per_item_quantity??component.quantity);
@@ -77,14 +82,14 @@
       const total=Math.abs(difference)*quantity;
       const prefix=difference>0?"Adicionar":"Remover";
       const amount=total>1?`${total}x `:"";
-      return `<span class="order-change-chip ${difference>0?"add":"remove"}">${prefix} ${amount}${escapeHtml(component.component_name)}</span>`;
+      return orderChangeMarkup(`${prefix} ${amount}${component.component_name}`,difference>0?"add":"remove");
     });
     const image=photo?`<img src="${escapeHtml(photo)}" alt="" loading="lazy">`:'<span class="order-item-photo" aria-hidden="true"></span>';
     const note=item.notes?`<small>${escapeHtml(item.notes)}</small>`:"";
     const quantityBadge=orderQuantityBadge(quantity);
     return `<div class="order-item ${expanded?"expanded-order-item":""}">${image}<div class="order-item-copy"><div class="order-item-title">${quantityBadge}<strong>${escapeHtml(item.item_name||item.name||"Item")}</strong></div>${changes.length?`<div class="order-item-changes">${changes.join("")}</div>`:""}${note}</div></div>`;
   }
-  function sellableTotalsMarkup(order){return (order.order_sellable_component_totals||[]).filter(row=>Number(row.manual_adjustment)!==0).map(row=>{const photo=row.snapshot?.representation?.photo_url_1,quantity=Math.max(0,Math.trunc(Number(row.quantity)||0));return `<div class="order-item pooled-order-component"><span class="order-item-photo" aria-hidden="true">${photo?`<img src="${escapeHtml(photo)}" alt="">`:""}</span><div class="order-item-copy"><div class="order-item-title"><strong>${quantity}× ${escapeHtml(row.component_name)}${quantity===0?" (removido)":""}</strong></div>${row.snapshot?.representation?.description?`<small>${escapeHtml(row.snapshot.representation.description)}</small>`:""}${Number(row.charged_quantity)>0?`<small>${Number(row.charged_quantity)} adicional(is) · ${money(Number(row.charged_quantity)*Number(row.unit_price))}</small>`:""}</div></div>`}).join("")}
+  function sellableTotalsMarkup(order){return (order.order_sellable_component_totals||[]).filter(row=>Number(row.manual_adjustment)!==0).map(row=>{const photo=row.snapshot?.representation?.photo_url_1,quantity=Math.max(0,Math.trunc(Number(row.quantity)||0));return `<div class="order-item pooled-order-component"><span class="order-item-photo" aria-hidden="true">${photo?`<img src="${escapeHtml(photo)}" alt="">`:""}</span><div class="order-item-copy"><div class="order-item-title">${orderQuantityBadge(quantity)}<strong>${escapeHtml(row.component_name)}${quantity===0?" (removido)":""}</strong></div>${row.snapshot?.representation?.description?`<small>${escapeHtml(row.snapshot.representation.description)}</small>`:""}${Number(row.charged_quantity)>0?`<small class="order-component-charge">${orderQuantityBadge(row.charged_quantity)}<span>Adicional · ${money(Number(row.charged_quantity)*Number(row.unit_price))}</span></small>`:""}</div></div>`}).join("")}
   function renderOrders(){
     const pending=state.orders.filter(order=>order.status==="pending_confirmation");
     const pendingCandidates=state.candidates;
