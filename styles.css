@@ -34,3 +34,24 @@
 #ordersView:fullscreen{width:100vw;height:100dvh;min-height:0;padding:10px;background:#f4f6f8}
 #ordersView:fullscreen .orders-layout{height:auto;min-height:0;flex:1}
 @media(max-width:850px){.orders-tabs{overflow-x:auto;scrollbar-width:thin}.orders-display-controls{margin-left:0}.orders-tabs .delete-all-orders{white-space:nowrap}}
+.group-profiles-panel{display:grid;gap:12px;margin-top:8px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#fff,#f7f9fb)}
+.group-profiles-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.group-profiles-heading h3{margin:0;font-size:1.05rem}
+.group-profiles-heading p{margin:4px 0 0;color:var(--muted);font-size:.84rem;line-height:1.5}
+.group-profiles-counts{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.profile-count,.profile-state{display:inline-flex;align-items:center;white-space:nowrap;border-radius:999px;padding:5px 9px;font-size:.76rem;font-weight:800}
+.profile-count.active,.profile-state.active{background:#e7f7ed;color:#176b38}
+.profile-count.inactive,.profile-state.inactive{background:#f1f3f5;color:#66717a}
+.group-association-profiles{display:grid;gap:8px}
+.group-profile-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.group-profile-card.is-inactive{background:#f8f9fa}
+.group-profile-main{display:grid;gap:8px;min-width:0}
+.group-profile-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.group-profile-title strong{font-size:.95rem}
+.group-profile-facts{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-size:.78rem}
+.group-profile-facts strong{color:var(--text)}
+.group-profiles-empty{display:grid;gap:4px;padding:14px;border:1px dashed var(--line);border-radius:12px;background:#fff;color:var(--muted);font-size:.85rem}
+.group-profiles-empty strong{color:var(--text)}
+@media(max-width:620px){.group-profiles-heading{display:grid}.group-profiles-counts{justify-content:flex-start}.group-profile-facts{display:grid;gap:4px}}
+.profile-category-help{margin:-8px 0 2px;color:var(--muted);font-size:.82rem;line-height:1.5}
+.profile-category-description{align-self:end;min-height:44px}
