@@ -216,8 +216,7 @@
       <label class="check-row"><input id="packageShowDefaultsInItem" type="checkbox" checked> Mostrar componentes padrão na descrição do item</label>
       <div class="form-grid"><label>Grupo pai<select id="packageParent"><option value="">Raiz</option></select></label><label>Prioridade<input id="packagePriority" type="number" min="0" step="1" value="0"></label></div>
       <label>Regra de disponibilidade<select id="packageAvailabilityRule"><option value="all_positive_defaults_required">Obrigatórios: todos os padrões acima de zero</option><option value="one_available_with_priority_fallback">Obrigatório: ao menos uma opção, respeitando a prioridade</option><option value="optional_warn_only">Opcional: avisar quando faltar</option><option value="optional">Opcional: não bloqueia o produto</option></select></label>
-      <label class="check-row"><input id="packageRequiresSelection" type="checkbox"> O cliente deve manter pelo menos uma opção selecionada</label>
-      <div class="form-grid"><label>Mínimo de opções selecionadas<input id="packageMin" type="number" min="0" step="1" value="0"></label><label>Máximo de opções selecionadas<input id="packageMax" type="number" min="0" step="1" placeholder="Sem limite"></label></div>
+      <div class="form-grid"><label>Máximo geral de opções selecionadas<input id="packageMax" type="number" min="0" step="1" placeholder="Sem limite"></label></div>
       <label class="check-row"><input id="packageActive" type="checkbox" checked> Ativo</label>
       <div class="dialog-actions"><button id="deletePackage" type="button" class="button danger-button" hidden>Excluir grupo</button><span class="dialog-spacer"></span><button id="cancelPackage" type="button" class="button">Cancelar</button><button class="button primary">Salvar grupo</button></div>
     </form>
